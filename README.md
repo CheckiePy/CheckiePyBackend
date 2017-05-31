@@ -5,30 +5,17 @@
 ### Prerequisites
 
 * Python 3.5
-* Angular CLI
 
-### Setup
+### Setup and run
 
 ```
-git clone https://github.com/Ustimov/acs.git
+git clone https://github.com/acsproj/acsbackend.git
+cd acsbackend
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
 cd acs
-python3 -m venv backend/venv
-source backend/venv/bin/activate
-pip3 install -r backend/requirements.txt
-```
-
-### Run backend
-
-```
-cd backend/acs/
 python3 manage.py runserver
-```
-
-### Run frontend
-
-```
-cd frontend/acs
-ng serve
 ```
 
 ## License
