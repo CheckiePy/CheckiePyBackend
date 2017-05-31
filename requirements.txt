@@ -1,10 +1,10 @@
-acscore==0.1
-coverage==4.2
+acscore==0.3
+amqp==2.1.4
+billiard==3.5.0.2
+celery==4.0.2
 Django==1.11.1
 djangorestframework==3.6.3
-mock==2.0.0
-pbr==1.10.0
-Pillow==3.3.0
+dulwich==0.17.3
+kombu==4.0.2
 pytz==2017.2
-six==1.10.0
-virtualenv==15.0.3
+vine==1.1.3

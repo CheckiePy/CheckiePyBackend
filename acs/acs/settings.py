@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'api',
+    'code_style',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +137,7 @@ REST_FRAMEWORK = {
 
 CELERY_BROKER_URL = 'amqp://localhost//'
 CELERY_RESULT_BACKEND = 'rpc://'
+
+# Dulwich
+
+REPOSITORY_DIR = os.path.join(BASE_DIR, 'repositories')
