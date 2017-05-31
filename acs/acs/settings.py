@@ -130,3 +130,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     )
 }
+
+
+# Celery
+
+CELERY_BROKER_URL = 'amqp://localhost//'
+CELERY_RESULT_BACKEND = 'rpc://'

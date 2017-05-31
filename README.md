@@ -13,9 +13,18 @@ git clone https://github.com/acsproj/acsbackend.git
 cd acsbackend
 python3 -m venv venv
 source venv/bin/activate
+pip3 install git+https://github.com/acsproj/acscore.git@0.1
 pip3 install -r requirements.txt
 cd acs
 python3 manage.py runserver
+```
+
+### Note
+
+For async tasks RabbitMQ is required. Start a celery worker with this command:
+
+```
+celery -A acs worker -l info
 ```
 
 ## License
