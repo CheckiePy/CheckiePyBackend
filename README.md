@@ -14,7 +14,7 @@ git clone https://github.com/Ustimov/acs.git
 cd acs
 python3 -m venv backend/venv
 source backend/venv/bin/activate
-pip install -r backend/requirements.txt
+pip3 install -r backend/requirements.txt
 ```
 
 ### Run backend
