@@ -1,3 +1,10 @@
-gitDjango==1.11.1
+acscore==0.1
+coverage==4.2
+Django==1.11.1
 djangorestframework==3.6.3
+mock==2.0.0
+pbr==1.10.0
+Pillow==3.3.0
 pytz==2017.2
+six==1.10.0
+virtualenv==15.0.3
