@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 
+import config
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'social_django',
     'api',
     'code_style',
 ]
@@ -141,3 +144,18 @@ CELERY_RESULT_BACKEND = 'rpc://'
 # Dulwich
 
 REPOSITORY_DIR = os.path.join(BASE_DIR, 'repositories')
+
+
+# Social auth
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GITHUB_KEY = config.CLIENT_ID
+SOCIAL_AUTH_GITHUB_SECRET = config.CLIENT_SECRET
+SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'admin:repo_hook']
+
+LOGIN_URL = '/login_complete/'
+LOGIN_REDIRECT_URL = '/login_complete/'

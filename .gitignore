@@ -103,3 +103,6 @@ ENV/
 
 # SQLite
 *.sqlite3
+
+# Secrets
+acs/config.py

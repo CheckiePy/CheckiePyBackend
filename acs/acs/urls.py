@@ -16,7 +16,12 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 
+from . import views
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url('^api/', include('api.urls', namespace='api')),
+    url(r'^api/', include('api.urls', namespace='api')),
+    url('', include('social_django.urls', namespace='social')),
+    url(r'^login_complete/', views.login_complete),
+    url(r'^login_success/', views.login_success),
 ]
