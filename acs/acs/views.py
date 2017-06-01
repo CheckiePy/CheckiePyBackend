@@ -10,5 +10,10 @@ def login_complete(request):
     return redirect('/login_success/?token={}'.format(token))
 
 
+@login_required
 def login_success(request):
     return HttpResponse('Success')
+
+
+def index(request):
+    return redirect('/admin/')

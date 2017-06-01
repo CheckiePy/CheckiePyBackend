@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-
 import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -44,6 +43,7 @@ INSTALLED_APPS = [
     'social_django',
     'api',
     'code_style',
+    'repository',
 ]
 
 MIDDLEWARE = [
@@ -143,7 +143,7 @@ CELERY_RESULT_BACKEND = 'rpc://'
 
 # Dulwich
 
-REPOSITORY_DIR = os.path.join(BASE_DIR, 'repositories')
+REPOSITORY_DIR = os.path.join(BASE_DIR, 'tmp')
 
 
 # Social auth

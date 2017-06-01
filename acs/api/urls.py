@@ -19,4 +19,5 @@ from rest_framework.authtoken import views
 urlpatterns = [
     url(r'^api-token-auth/', views.obtain_auth_token),
     url('^code_style/', include('code_style.urls', namespace='code_style')),
+    url('^repository/', include('repository.urls', namespace='repository')),
 ]
