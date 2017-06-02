@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from . import models
 from . import tasks
+from . import serializers
 
 
 @api_view(['POST'])
@@ -20,3 +21,12 @@ def update(request, format=None):
     update = models.GitRepositoryUpdate.objects.create(user=request.user)
     tasks.load_user_repositories.delay(request.user.username, update.id)
     return Response(True, status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@authentication_classes((TokenAuthentication,))
+@permission_classes((IsAuthenticated,))
+def repository_list(request, format=None):
+    repositories = models.GitRepository.objects.all()
+    serializer = serializers.GitRepositorySerializer(repositories, many=True)
+    return Response(serializer.data, status.HTTP_200_OK)
