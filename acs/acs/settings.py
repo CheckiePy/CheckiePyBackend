@@ -159,3 +159,8 @@ SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'admin:repo_hook']
 
 LOGIN_URL = '/login_complete/'
 LOGIN_REDIRECT_URL = '/login_complete/'
+
+
+# Webhook
+
+WEBHOOK_URL = 'http://127.0.0.1/'

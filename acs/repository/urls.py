@@ -20,4 +20,6 @@ from . import views
 urlpatterns = [
     url(r'^update/', views.update),
     url(r'^list/', views.repository_list),
+    url(r'^last_update/', views.last_update),
+    url(r'^set_hook/(?P<id>[0-9]+)/', views.set_hook),
 ]
