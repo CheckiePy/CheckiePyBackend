@@ -56,3 +56,9 @@ def set_hook(request, id):
         print(e)
         response = False
     return Response(response, status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def handle_hook(request):
+    tasks.handle_hook.delay(request.body.decode())
+    return Response(True, status.HTTP_200_OK)

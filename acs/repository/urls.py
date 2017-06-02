@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^list/', views.repository_list),
     url(r'^last_update/', views.last_update),
     url(r'^set_hook/(?P<id>[0-9]+)/', views.set_hook),
+    url(r'^handle_hook/', views.handle_hook),
 ]
