@@ -8,10 +8,11 @@ from github import Github
 from django.contrib.auth.models import User
 from django.conf import settings
 from dulwich import porcelain
-from dulwich.repo import Repo
 from social_django.models import UserSocialAuth
 from subprocess import Popen, PIPE, STDOUT
 from acscore.counter import Counter
+from acscore.analyzer import Analyzer
+from unidiff import PatchSet
 
 from . import models
 
@@ -65,7 +66,7 @@ def set_hook(username, repository_id):
 
 
 @shared_task
-def handle_hook(body):
+def handle_hook(body, repository_id):
     body = json.loads(body)
 
     # Handle only "opened" action
@@ -96,36 +97,38 @@ def handle_hook(body):
     p.write(patch.content.decode())
     p.close()
 
-    repo = Repo(path)
-    old_commit = repo.head().decode()
-    print(old_commit)
-
     message = run_command(["{0}/bash/applypatch.sh".format(settings.BASE_DIR), path])
     print(message)
-
-    new_commit = repo.head().decode()
-    print(new_commit)
-
-    message = run_command(["{0}/bash/changedfiles.sh".format(settings.BASE_DIR), path, old_commit, new_commit])
-    print(message)
-
-    changed_files = list(filter(lambda item: item != '', message.split('\n')))
-
-    print(changed_files)
-
-    counter = Counter()
-    for file in changed_files:
-        metrics = counter.metrics_for_file(os.path.join(path, file))
-        print(metrics)
 
     username = 'UPlatformTeam'
     user, access_token = get_credentials(username)
     github = Github(username, access_token)
     github_user = github.get_user(owner)
     github_repo = github_user.get_repo(repo_name)
-
     pull = github_repo.get_pulls()[0]
-    pull.create_issue_comment('Metrics counted')
+    commit = pull.get_commits()[0]
+
+    connection = models.GitRepositoryConnection.objects.get(repository=repository_id)
+    repo_metrics = json.loads(connection.code_style.metrics)
+
+    analyzer = Analyzer(repo_metrics)
+    counter = Counter()
+    patch_set = PatchSet(diff.content.decode())
+    mentioned = {}
+    for patch in patch_set:
+        file_metrics = counter.metrics_for_file(os.path.join(path, patch.path), verbose=True)
+        inspections = analyzer.inspect(file_metrics)
+        for hunk in patch:
+            for inspection, value in inspections.items():
+                if inspection in mentioned:
+                    continue
+                elif 'lines' not in value:
+                    mentioned[inspection] = True
+                    pull.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
+                else:
+                    for line in value['lines']:
+                        if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
+                            pull.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
 
     shutil.rmtree(path)
 

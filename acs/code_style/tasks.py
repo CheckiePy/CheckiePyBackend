@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 
 from acscore.counter import Counter
@@ -16,7 +17,7 @@ def calc_metrics(code_style_id):
         path = os.path.join(settings.REPOSITORY_DIR, str(code_style.id))
         porcelain.clone(code_style.repository, path)
         counter = Counter()
-        code_style.metrics = counter.metrics_for_dir(path, ['file_length'])
+        code_style.metrics = json.dumps(counter.metrics_for_dir(path))
         code_style.calc_status = 'C'
         shutil.rmtree(path)
     except Exception as e:

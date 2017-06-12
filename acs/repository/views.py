@@ -1,5 +1,6 @@
 from django.utils import timezone
 
+from code_style import models as cs_models
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -44,10 +45,12 @@ def last_update(request):
 @api_view(['POST'])
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
-def set_hook(request, id):
+def set_hook(request, repo_id, code_style_id):
     try:
-        repository = models.GitRepository.objects.get(id=id)
+        repository = models.GitRepository.objects.get(id=repo_id)
         if not repository.is_connected:
+            code_style = cs_models.CodeStyle.objects.get(id=code_style_id)
+            models.GitRepositoryConnection.objects.create(repository=repository, code_style=code_style)
             tasks.set_hook.delay(request.user.username, repository.id)
             response = True
         else:
@@ -59,6 +62,6 @@ def set_hook(request, id):
 
 
 @api_view(['POST'])
-def handle_hook(request):
-    tasks.handle_hook.delay(request.body.decode())
+def handle_hook(request, id):
+    tasks.handle_hook.delay(request.body.decode(), id)
     return Response(True, status.HTTP_200_OK)

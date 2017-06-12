@@ -9,3 +9,6 @@ class CodeStyle(models.Model):
     metrics = models.TextField(default='{}')
     calc_status = models.CharField(max_length=32, choices=(('S', 'Started'), ('F', 'Failed'), ('C', 'Completed')),
                                    default='S')
+
+    def __str__(self):
+        return '{0}. {1}'.format(self.id, self.name)

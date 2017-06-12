@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from code_style import models as cs_models
 
 
 class GitRepository(models.Model):
@@ -16,3 +17,8 @@ class GitRepositoryUpdate(models.Model):
     datetime = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=32, choices=(('S', 'Started'), ('F', 'Failed'), ('C', 'Completed')),
                               default='S')
+
+
+class GitRepositoryConnection(models.Model):
+    repository = models.ForeignKey(GitRepository)
+    code_style = models.ForeignKey(cs_models.CodeStyle)

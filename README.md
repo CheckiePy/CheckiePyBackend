@@ -2,32 +2,57 @@
 
 ## Getting started
 
-### Prerequisites
+### 1. Prerequisites
 
 * Python 3.5
 
-### Setup and run
+### 2. Setup and run
 
 ```
 git clone https://github.com/acsproj/acsbackend.git
 cd acsbackend
 python3 -m venv venv
 source venv/bin/activate
-pip3 install git+https://github.com/acsproj/acscore.git@0.3
+pip3 install git+https://github.com/acsproj/acscore.git@0.6
 pip3 install -r requirements.txt
 cd acs
 python3 manage.py runserver
 ```
 
-### Note
-
+**Note:**
 For async tasks RabbitMQ is required. Start a celery worker with this command:
 
 ```
 celery -A acs worker -l info
 ```
+### 3. API
 
-## License
+#### 3.1. Account
+
+* TODO
+
+#### 3.2. Code Style
+
+##### 3.2.1. Create
+
+*Path:*
+```
+/api/code_style/create/
+```
+
+*Body:*
+```
+{
+    "name": "Name Of Code Style",
+    "repository": "path_to_git_repository"
+}
+```
+
+#### 3.3. Repository
+
+* TODO
+
+# License
 
 The MIT License (MIT) Copyright (c) 2017 Artem Ustimov
 

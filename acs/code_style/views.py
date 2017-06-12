@@ -15,7 +15,8 @@ from . import models
 def create(request, format=None):
     serializer = serializers.CodeStyleSerializer(data=request.data)
     if serializer.is_valid():
-        code_style = models.CodeStyle.objects.create(user=request.user, name=serializer.data['name'], repository=serializer.data['repository'])
+        code_style = models.CodeStyle.objects.create(user=request.user, name=serializer.data['name'],
+                                                     repository=serializer.data['repository'])
         tasks.calc_metrics.delay(code_style.id)
         response = True
     else:
