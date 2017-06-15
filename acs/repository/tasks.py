@@ -89,7 +89,8 @@ def handle_hook(body, repository_id):
     diff = requests.get(diff_url)
     patch = requests.get(patch_url)
 
-    d = open(os.path.join(path, 'd.diff'), 'w')
+    diff_path = os.path.join(path, 'd.diff')
+    d = open(diff_path, 'w')
     d.write(diff.content.decode())
     d.close()
 
@@ -113,22 +114,31 @@ def handle_hook(body, repository_id):
 
     analyzer = Analyzer(repo_metrics)
     counter = Counter()
-    patch_set = PatchSet(diff.content.decode())
+    diff_file = open(diff_path)
+    patch_set = PatchSet(diff_file)
+    diff_file.close()
+
+    print(patch_set, len(patch_set))
+
     mentioned = {}
     for patch in patch_set:
         file_metrics = counter.metrics_for_file(os.path.join(path, patch.path), verbose=True)
+        print('METRICS', file_metrics)
         inspections = analyzer.inspect(file_metrics)
         for hunk in patch:
-            for inspection, value in inspections.items():
-                if inspection in mentioned:
-                    continue
-                elif 'lines' not in value:
-                    mentioned[inspection] = True
-                    pull.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
-                else:
-                    for line in value['lines']:
-                        if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
-                            pull.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
+            print('INSPECTIONS', inspections)
+            for metric_name, inspection_value in inspections.items():
+                for inspection, value in inspection_value.items():
+                    print('VALUE', value)
+                    if inspection in mentioned:
+                        continue
+                    elif 'lines' not in value:
+                        mentioned[inspection] = True
+                        pull.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
+                    else:
+                        for line in value['lines']:
+                            if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
+                                pull.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
 
     shutil.rmtree(path)
 
