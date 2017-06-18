@@ -16,6 +16,22 @@ from unidiff import PatchSet
 
 from . import models
 
+ACTION = 'action'
+OPENED = 'opened'
+SYNCHRONIZE = 'synchronize'
+REPOSITORY = 'repository'
+CLONE_URL = 'clone_url'
+PULL_REQUEST = 'pull_request'
+PATCH_URL = 'patch_url'
+DIFF_URL = 'diff_url'
+PATCH_FILENAME = 'p.patch' # This name is used in applypatch.sh
+DIFF_FILENAME = 'd.diff'
+BOT_NAME = 'UPlatformTeam'
+NAME = 'name'
+OWNER = 'owner'
+LOGIN = 'login'
+NUMBER = 'number'
+
 
 def run_command(command):
     p = Popen(command, stdout=PIPE, stderr=STDOUT)
@@ -65,80 +81,111 @@ def set_hook(username, repository_id):
         print(e)
 
 
-@shared_task
-def handle_hook(body, repository_id):
-    body = json.loads(body)
+def is_need_to_handle_hook(body):
+    # We need to check repo only if pull request is newly created or received a new commit.
+    if ACTION in body and (body[ACTION] == OPENED or body[ACTION] == SYNCHRONIZE):
+        return True
+    return False
 
-    # Handle only "opened" action
-    if 'action' not in body or body['action'] != 'opened':
-        return
 
-    repo_name = body['repository']['name']
-    owner = body['repository']['owner']['login']
+def clone_repo(body):
+    clone_url = body[REPOSITORY][CLONE_URL]
 
-    diff_url = body['pull_request']['diff_url']
-    patch_url = body['pull_request']['patch_url']
-    clone_url = body['repository']['clone_url']
-
+    # Todo: hashed name for repo to get unique path
     name = os.path.basename(os.path.normpath(clone_url))
     path = os.path.join(settings.REPOSITORY_DIR, name)
     if os.path.exists(path):
         shutil.rmtree(path)
     porcelain.clone(clone_url, path)
+    return path
 
-    diff = requests.get(diff_url)
+
+def save_patch(body, repo_path):
+    patch_url = body[PULL_REQUEST][PATCH_URL]
     patch = requests.get(patch_url)
+    with open(os.path.join(repo_path, PATCH_FILENAME), 'w') as p:
+        p.write(patch.content.decode())
 
-    diff_path = os.path.join(path, 'd.diff')
-    d = open(diff_path, 'w')
-    d.write(diff.content.decode())
-    d.close()
 
-    p = open(os.path.join(path, 'p.patch'), 'w')
-    p.write(patch.content.decode())
-    p.close()
+def apply_patch(repo_path):
+    # Todo: pass patch filename as argument
+    message = run_command(["{0}/bash/applypatch.sh".format(settings.BASE_DIR), repo_path])
+    # print(message)
 
-    message = run_command(["{0}/bash/applypatch.sh".format(settings.BASE_DIR), path])
-    print(message)
 
-    username = 'UPlatformTeam'
-    user, access_token = get_credentials(username)
-    github = Github(username, access_token)
+def save_diff(body, repo_path):
+    diff_url = body[PULL_REQUEST][DIFF_URL]
+    diff = requests.get(diff_url)
+    diff_path = os.path.join(repo_path, DIFF_FILENAME)
+    with open(diff_path, 'w') as d:
+        d.write(diff.content.decode())
+
+
+def access_to_repo_as_bot(body, bot_name):
+    repo_name = body[REPOSITORY][NAME]
+    owner = body[REPOSITORY][OWNER][LOGIN]
+    user, access_token = get_credentials(bot_name)
+    github = Github(bot_name, access_token)
     github_user = github.get_user(owner)
     github_repo = github_user.get_repo(repo_name)
-    pull = github_repo.get_pulls()[0]
-    commit = pull.get_commits()[0]
+    return github_repo
 
+
+def get_pull_request_and_latest_commit(body, github_repo):
+    pull_request = github_repo.get_pull(body[NUMBER])
+    # Todo: check if comment to latest commit is ok when style violation in previous commit
+    commit = pull_request.get_commits().reversed[0]
+    return pull_request, commit
+
+
+def review_repo(repository_id, repo_path, pull_request, commit):
+    # Todo: refactor
     connection = models.GitRepositoryConnection.objects.get(repository=repository_id)
     repo_metrics = json.loads(connection.code_style.metrics)
-
     analyzer = Analyzer(repo_metrics)
     counter = Counter()
-    diff_file = open(diff_path)
-    patch_set = PatchSet(diff_file)
-    diff_file.close()
-
-    print(patch_set, len(patch_set))
+    with open(os.path.join(repo_path, DIFF_FILENAME), 'r') as d:
+        patch_set = PatchSet(d)
 
     mentioned = {}
     for patch in patch_set:
-        file_metrics = counter.metrics_for_file(os.path.join(path, patch.path), verbose=True)
-        print('METRICS', file_metrics)
+        file_metrics = counter.metrics_for_file(os.path.join(repo_path, patch.path), verbose=True)
+        #print('METRICS', file_metrics)
         inspections = analyzer.inspect(file_metrics)
         for hunk in patch:
-            print('INSPECTIONS', inspections)
+            #print('INSPECTIONS', inspections)
             for metric_name, inspection_value in inspections.items():
                 for inspection, value in inspection_value.items():
-                    print('VALUE', value)
+                    #print('VALUE', value)
                     if inspection in mentioned:
                         continue
                     elif 'lines' not in value:
                         mentioned[inspection] = True
-                        pull.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
+                        pull_request.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
                     else:
                         for line in value['lines']:
                             if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
-                                pull.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
+                                print('CREATE COMMENT', value['message'])
+                                pull_request.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
 
-    shutil.rmtree(path)
+
+@shared_task
+def handle_hook(json_body, repository_id):
+    body = json.loads(json_body)
+
+    if not is_need_to_handle_hook(body):
+        return
+
+    repo_path = clone_repo(body)
+    save_patch(body, repo_path)
+    apply_patch(repo_path)
+    save_diff(body, repo_path)
+
+    github_repo = access_to_repo_as_bot(body, BOT_NAME)
+    pull_request, commit = get_pull_request_and_latest_commit(body, github_repo)
+
+    # Todo: record mentioned violations
+    review_repo(repository_id, repo_path, pull_request, commit)
+
+    shutil.rmtree(repo_path)
 
