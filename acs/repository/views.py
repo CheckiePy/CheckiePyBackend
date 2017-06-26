@@ -30,7 +30,7 @@ def update(request):
 def repository_list(request):
     repositories = models.GitRepository.objects.all()
     serializer = serializers.GitRepositorySerializer(repositories, many=True)
-    return Response(serializer.data, status.HTTP_200_OK)
+    return Response({'result': serializer.data}, status.HTTP_200_OK)
 
 
 @api_view(['GET'])
