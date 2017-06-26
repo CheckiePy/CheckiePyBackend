@@ -28,7 +28,7 @@ def update(request):
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
 def repository_list(request):
-    repositories = models.GitRepository.objects.all()
+    repositories = models.GitRepository.objects.filter(user=request.user)
     serializer = serializers.GitRepositorySerializer(repositories, many=True)
     return Response({'result': serializer.data}, status.HTTP_200_OK)
 
