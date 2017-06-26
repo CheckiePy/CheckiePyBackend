@@ -13,3 +13,7 @@ class CodeStyleGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CodeStyle
         fields = ('id', 'name', 'repository')
+
+
+class IdSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
