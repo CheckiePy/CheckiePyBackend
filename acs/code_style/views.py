@@ -13,15 +13,14 @@ from . import models
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
 def create(request, format=None):
-    serializer = serializers.CodeStyleCreateSerializer(data=request.data)
-    if serializer.is_valid():
-        code_style = models.CodeStyle.objects.create(user=request.user, name=serializer.data['name'],
-                                                     repository=serializer.data['repository'])
+    create_serializer = serializers.CodeStyleCreateSerializer(data=request.data)
+    if create_serializer.is_valid():
+        code_style = models.CodeStyle.objects.create(user=request.user, name=create_serializer.data['name'],
+                                                     repository=create_serializer.data['repository'])
         tasks.calc_metrics.delay(code_style.id)
-        response = True
-    else:
-        response = serializer.errors
-    return Response(response, status=status.HTTP_200_OK)
+        read_serializer = serializers.CodeStyleReadSerializer(code_style)
+        return Response({'result': read_serializer.data}, status=status.HTTP_200_OK)
+    return Response({'detail': 'Required fields does not specified'}, status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -29,7 +28,7 @@ def create(request, format=None):
 @permission_classes((IsAuthenticated,))
 def code_style_list(request, format=None):
     code_styles = models.CodeStyle.objects.filter(user=request.user)
-    serializer = serializers.CodeStyleGetSerializer(code_styles, many=True)
+    serializer = serializers.CodeStyleReadSerializer(code_styles, many=True)
     return Response({'result': serializer.data}, status.HTTP_200_OK)
 
 

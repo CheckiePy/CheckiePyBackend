@@ -9,7 +9,7 @@ class CodeStyleCreateSerializer(serializers.ModelSerializer):
         fields = ('name', 'repository')
 
 
-class CodeStyleGetSerializer(serializers.ModelSerializer):
+class CodeStyleReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CodeStyle
         fields = ('id', 'name', 'repository')
