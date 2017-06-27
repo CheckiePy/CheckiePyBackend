@@ -13,3 +13,9 @@ class GitRepositoryUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GitRepositoryUpdate
         fields = ('datetime', 'status')
+
+
+class GitRepositoryConnectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.GitRepositoryConnection
+        fields = ('code_style', 'repository')

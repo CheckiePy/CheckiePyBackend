@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from code_style import models as cs_models
+from code_style import models as code_style_models
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -45,20 +45,18 @@ def last_update(request):
 @api_view(['POST'])
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
-def set_hook(request, repo_id, code_style_id):
-    try:
-        repository = models.GitRepository.objects.get(id=repo_id)
-        if not repository.is_connected:
-            code_style = cs_models.CodeStyle.objects.get(id=code_style_id)
-            models.GitRepositoryConnection.objects.create(repository=repository, code_style=code_style)
-            tasks.set_hook.delay(request.user.username, repository.id)
-            response = True
-        else:
-            response = False
-    except Exception as e:
-        print(e)
-        response = False
-    return Response(response, status.HTTP_200_OK)
+def connect_repository(request):
+    serializer = serializers.GitRepositoryConnectionSerializer(data=request.data)
+    print(serializer)
+    if serializer.is_valid():
+        repository = models.GitRepository.objects.filter(id=serializer.data['repository']).first()
+        if repository.is_connected:
+            return Response({'detail': 'Repository already connected'}, status.HTTP_400_BAD_REQUEST)
+        code_style = code_style_models.CodeStyle.objects.filter(id=serializer.data['code_style']).first()
+        models.GitRepositoryConnection.objects.create(repository=repository, code_style=code_style)
+        tasks.set_hook.delay(request.user.username, repository.id)
+        return Response({'result': serializer.data}, status.HTTP_200_OK)
+    return Response({'detail': 'Required fields does not specified or objects does not exists'}, status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

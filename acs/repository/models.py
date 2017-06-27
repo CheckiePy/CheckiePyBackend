@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from code_style import models as cs_models
+from code_style import models as code_style_models
 
 
 class GitRepository(models.Model):
@@ -21,4 +21,7 @@ class GitRepositoryUpdate(models.Model):
 
 class GitRepositoryConnection(models.Model):
     repository = models.ForeignKey(GitRepository)
-    code_style = models.ForeignKey(cs_models.CodeStyle)
+    code_style = models.ForeignKey(code_style_models.CodeStyle)
+
+    def __str__(self):
+        return 'CodeStyle: {} | Repository: {}'.format(self.code_style.id, self.repository.id)

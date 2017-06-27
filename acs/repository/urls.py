@@ -21,6 +21,6 @@ urlpatterns = [
     url(r'^update/', views.update),
     url(r'^list/', views.repository_list),
     url(r'^last_update/', views.last_update),
-    url(r'^set_hook/(?P<repo_id>[0-9]+)-(?P<code_style_id>[0-9]+)/', views.set_hook),
+    url(r'^connect/', views.connect_repository),
     url(r'^handle_hook/(?P<id>[0-9]+)/', views.handle_hook),
 ]

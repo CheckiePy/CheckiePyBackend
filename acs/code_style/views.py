@@ -39,7 +39,7 @@ def code_style_delete(request, format=None):
     serializer = serializers.IdSerializer(data=request.data)
     if serializer.is_valid():
         id = serializer.data['id']
-        code_style = models.CodeStyle.objects.filter(id=id, user=request.user)
+        code_style = models.CodeStyle.objects.filter(id=id, user=request.user).first()
         if not code_style:
             return Response({'detail': 'Code style not found'}, status.HTTP_404_NOT_FOUND)
         code_style.delete()
