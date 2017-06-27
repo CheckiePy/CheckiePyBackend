@@ -18,9 +18,10 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^update/', views.update),
+    url(r'^update/', views.update_repository),
     url(r'^list/', views.repository_list),
-    url(r'^last_update/', views.last_update),
+    url(r'^last_update/', views.last_repository_update),
     url(r'^connect/', views.connect_repository),
     url(r'^handle_hook/(?P<id>[0-9]+)/', views.handle_hook),
+    url(r'^disconnect/', views.disconnect_repository),
 ]
