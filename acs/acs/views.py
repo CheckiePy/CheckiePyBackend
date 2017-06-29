@@ -5,14 +5,9 @@ from rest_framework.authtoken.models import Token
 
 
 @login_required
-def login_complete(request):
+def auth_complete(request):
     token, status = Token.objects.get_or_create(user=request.user)
-    return redirect('/login_success/?token={}'.format(token))
-
-
-@login_required
-def login_success(request):
-    return HttpResponse('Success')
+    return redirect('/?token={}'.format(token))
 
 
 def index(request):

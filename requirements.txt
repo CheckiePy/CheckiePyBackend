@@ -9,6 +9,7 @@ Django==1.11.1
 django-cors-headers==2.1.0
 djangorestframework==3.6.3
 dulwich==0.17.3
+gunicorn==19.7.1
 idna==2.5
 kombu==4.0.2
 oauthlib==2.0.2

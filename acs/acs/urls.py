@@ -22,7 +22,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('api.urls', namespace='api')),
     url('', include('social_django.urls', namespace='social')),
-    url(r'^login_complete/', views.login_complete),
-    url(r'^login_success/', views.login_success),
+    url(r'^auth/complete/', views.auth_complete),
     url(r'^$', views.index),
 ]

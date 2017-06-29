@@ -26,7 +26,7 @@ SECRET_KEY = '2a-xkm6bps8c-t+y#21r$tkn#x*0eehz5xy%8smai!_lxr**g6'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['acs.uplatform.ru', '127.0.0.1']
 
 
 # Application definition
@@ -159,8 +159,8 @@ SOCIAL_AUTH_GITHUB_KEY = config.CLIENT_ID
 SOCIAL_AUTH_GITHUB_SECRET = config.CLIENT_SECRET
 SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'admin:repo_hook']
 
-LOGIN_URL = '/login_complete/'
-LOGIN_REDIRECT_URL = '/login_complete/'
+LOGIN_URL = '/auth/complete/'
+LOGIN_REDIRECT_URL = '/auth/complete/'
 
 
 # Webhook
