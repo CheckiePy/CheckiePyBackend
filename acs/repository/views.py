@@ -18,10 +18,15 @@ from code_style import serializers as code_style_serializers
 @permission_classes((IsAuthenticated,))
 def update_repository(request):
     last_update = models.GitRepositoryUpdate.objects.filter(user=request.user).order_by('-datetime').first()
-    if last_update and last_update.datetime > timezone.now() - timezone.timedelta(seconds=3):
-        return Response({'detail': 'Updates requested too ofter. Please, try again later'}, status.HTTP_400_BAD_REQUEST)
+    if last_update and last_update.status == 'S' and last_update.datetime > timezone.now() - timezone.timedelta(seconds=60):
+        return Response({'detail': 'Update already started'}, status.HTTP_400_BAD_REQUEST)
     update = models.GitRepositoryUpdate.objects.create(user=request.user)
-    tasks.load_user_repositories.delay(request.user.username, update.id)
+    try:
+        tasks.load_user_repositories.delay(request.user.username, update.id)
+    except:
+        update.status = 'F'
+        update.save()
+        return Response({'detail': 'Cannot execute async operation'}, status.HTTP_412_PRECONDITION_FAILED)
     return Response({'result': 'Repository update was started'}, status.HTTP_200_OK)
 
 
@@ -40,7 +45,7 @@ def repository_list(request):
 def last_repository_update(request):
     last_update = models.GitRepositoryUpdate.objects.filter(user=request.user).order_by('-datetime').first()
     serializer = serializers.GitRepositoryUpdateSerializer(last_update)
-    return Response(serializer.data, status.HTTP_200_OK)
+    return Response({'result': serializer.data}, status.HTTP_200_OK)
 
 
 @api_view(['POST'])
