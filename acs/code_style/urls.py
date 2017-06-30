@@ -18,8 +18,8 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^create/', views.create),
+    url(r'^create/', views.create_code_style),
     url(r'^list/', views.code_style_list),
-    url(r'^delete/', views.code_style_delete),
-
+    url(r'^delete/', views.delete_code_style),
+    url(r'^read/(?P<id>[0-9]+)/', views.read_code_style),
 ]

@@ -4,4 +4,3 @@ COPY requirements.txt /
 RUN pip install git+https://github.com/acsproj/acscore.git@0.7
 RUN pip install -r requirements.txt
 WORKDIR /src/
-

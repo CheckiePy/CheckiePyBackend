@@ -127,6 +127,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
 # REST Framework
@@ -141,6 +142,7 @@ REST_FRAMEWORK = {
 # Celery
 
 CELERY_BROKER_URL = 'amqp://localhost//'
+#CELERY_BROKER_URL = 'amqp://rabbitmq//'
 CELERY_RESULT_BACKEND = 'rpc://'
 
 # Dulwich

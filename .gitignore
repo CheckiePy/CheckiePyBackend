@@ -106,3 +106,6 @@ ENV/
 
 # Secrets
 acs/config.py
+
+# Static
+acs/static

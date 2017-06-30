@@ -12,12 +12,17 @@ from . import models
 @api_view(['POST'])
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
-def create(request, format=None):
+def create_code_style(request):
     create_serializer = serializers.CodeStyleCreateSerializer(data=request.data)
     if create_serializer.is_valid():
         code_style = models.CodeStyle.objects.create(user=request.user, name=create_serializer.data['name'],
                                                      repository=create_serializer.data['repository'])
-        tasks.calc_metrics.delay(code_style.id)
+        try:
+            tasks.calc_metrics.delay(code_style.id)
+        except:
+            code_style.calc_status = 'F'
+            code_style.save()
+            return Response({'detail': 'Cannot execute async operation'}, status.HTTP_412_PRECONDITION_FAILED)
         read_serializer = serializers.CodeStyleReadSerializer(code_style)
         return Response({'result': read_serializer.data}, status=status.HTTP_200_OK)
     return Response({'detail': 'Required fields does not specified'}, status.HTTP_400_BAD_REQUEST)
@@ -26,16 +31,27 @@ def create(request, format=None):
 @api_view(['GET'])
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
-def code_style_list(request, format=None):
-    code_styles = models.CodeStyle.objects.filter(user=request.user)
+def code_style_list(request):
+    code_styles = models.CodeStyle.objects.filter(user=request.user, calc_status='C')
     serializer = serializers.CodeStyleReadSerializer(code_styles, many=True)
     return Response({'result': serializer.data}, status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@authentication_classes((TokenAuthentication,))
+@permission_classes((IsAuthenticated,))
+def read_code_style(request, id):
+    code_style = models.CodeStyle.objects.filter(user=request.user, id=id).first()
+    if not code_style:
+        return Response({'detail': 'Code style not found'}, status.HTTP_404_NOT_FOUND)
+    code_style_read_serializer = serializers.CodeStyleReadSerializer(code_style)
+    return Response({'result': code_style_read_serializer.data}, status.HTTP_200_OK)
 
 
 @api_view(['POST'])
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
-def code_style_delete(request, format=None):
+def delete_code_style(request):
     serializer = serializers.IdSerializer(data=request.data)
     if serializer.is_valid():
         id = serializer.data['id']
