@@ -2,6 +2,8 @@ import os
 import json
 import shutil
 import requests
+import logging
+import io
 
 from celery import shared_task
 from github import Github
@@ -31,6 +33,8 @@ NAME = 'name'
 OWNER = 'owner'
 LOGIN = 'login'
 NUMBER = 'number'
+
+logger = logging.getLogger(__name__)
 
 
 def run_command(command):
@@ -94,51 +98,92 @@ def clone_repo(body):
     # Todo: hashed name for repo to get unique path
     name = os.path.basename(os.path.normpath(clone_url))
     path = os.path.join(settings.REPOSITORY_DIR, name)
+
+    logger.info('Started cloning repo from {0} to {1}'.format(clone_url, path))
+
     if os.path.exists(path):
+
+        logger.info('Repo at {0} already exists. Deleting it'.format(path))
+
         shutil.rmtree(path)
-    porcelain.clone(clone_url, path)
+
+    bytes_io = io.BytesIO()
+    porcelain.clone(clone_url, path, errstream=bytes_io)
+
+    logger.info(bytes_io.getvalue().decode())
+
+    logger.info('Repo successfully cloned')
+
     return path
 
 
 def save_patch(body, repo_path):
     patch_url = body[PULL_REQUEST][PATCH_URL]
+    path = os.path.join(repo_path, PATCH_FILENAME)
+
+    logger.info('Starting downloading of path file from {0} to {1}'.format(patch_url, path))
+
     patch = requests.get(patch_url)
-    with open(os.path.join(repo_path, PATCH_FILENAME), 'w') as p:
+    with open(path, 'w') as p:
         p.write(patch.content.decode())
+
+        logger.info('Patch file successfully downloaded')
 
 
 def apply_patch(repo_path):
+    logger.info('Applying the patch')
+
     # Todo: pass patch filename as argument
     message = run_command(["{0}/bash/applypatch.sh".format(settings.BASE_DIR), repo_path])
-    # print(message)
+
+    logger.info(message)
 
 
 def save_diff(body, repo_path):
     diff_url = body[PULL_REQUEST][DIFF_URL]
-    diff = requests.get(diff_url)
     diff_path = os.path.join(repo_path, DIFF_FILENAME)
+
+    logger.info('Starting downloading diff file from {0} to {1}'.format(diff_url, diff_path))
+
+    diff = requests.get(diff_url)
     with open(diff_path, 'w') as d:
         d.write(diff.content.decode())
+
+        logger.info('Diff file successfully downloaded')
 
 
 def access_to_repo_as_bot(body, bot_name):
     repo_name = body[REPOSITORY][NAME]
     owner = body[REPOSITORY][OWNER][LOGIN]
+
+    logger.info('Trying to get access to {0} repo of {1} with bot {2}'.format(repo_name, owner, bot_name))
+
     user, access_token = get_credentials(bot_name)
     github = Github(bot_name, access_token)
     github_user = github.get_user(owner)
     github_repo = github_user.get_repo(repo_name)
+
+    logger.info('Access successfully gained')
+
     return github_repo
 
 
 def get_pull_request_and_latest_commit(body, github_repo):
     pull_request = github_repo.get_pull(body[NUMBER])
+
+    logger.info('Got pull request with titile {0} and number {1}'.format(pull_request.title, pull_request.number))
+
     # Todo: check if comment to latest commit is ok when style violation in previous commit
     commit = pull_request.get_commits().reversed[0]
+
+    logger.info('Got commit with sha {0}'.format(commit.sha))
+
     return pull_request, commit
 
 
 def review_repo(repository_id, repo_path, pull_request, commit):
+    logger.info('Starting review')
+
     # Todo: refactor
     connection = models.GitRepositoryConnection.objects.get(repository=repository_id)
     repo_metrics = json.loads(connection.code_style.metrics)
@@ -150,42 +195,64 @@ def review_repo(repository_id, repo_path, pull_request, commit):
     mentioned = {}
     for patch in patch_set:
         file_metrics = counter.metrics_for_file(os.path.join(repo_path, patch.path), verbose=True)
-        #print('METRICS', file_metrics)
+
+        logger.info('{0}: {1}'.format('METRICS', file_metrics))
+
         inspections = analyzer.inspect(file_metrics)
         for hunk in patch:
-            #print('INSPECTIONS', inspections)
+
+            logger.info('{0}: {1}'.format('INSPECTIONS', inspections))
+
             for metric_name, inspection_value in inspections.items():
                 for inspection, value in inspection_value.items():
-                    #print('VALUE', value)
+
+                    logger.info('{0}: {1}'.format('VALUE', value))
+
                     if inspection in mentioned:
                         continue
                     elif 'lines' not in value:
                         mentioned[inspection] = True
+
+                        logger.info('{0}: {1}'.format('ISSUE COMMENT', value['message']))
+
                         pull_request.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
                     else:
                         for line in value['lines']:
                             if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
-                                print('CREATE COMMENT', value['message'])
+
+                                logger.info('{0}: {1}'.format('COMMENT', value['message']))
+
                                 pull_request.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
 
 
 @shared_task
 def handle_hook(json_body, repository_id):
-    body = json.loads(json_body)
 
-    if not is_need_to_handle_hook(body):
-        return
+    print(logger)
 
-    repo_path = clone_repo(body)
-    save_patch(body, repo_path)
-    apply_patch(repo_path)
-    save_diff(body, repo_path)
+    try:
+        body = json.loads(json_body)
 
-    github_repo = access_to_repo_as_bot(body, BOT_NAME)
-    pull_request, commit = get_pull_request_and_latest_commit(body, github_repo)
+        if not is_need_to_handle_hook(body):
+            return
 
-    # Todo: record mentioned violations
-    review_repo(repository_id, repo_path, pull_request, commit)
+        logger.info('Started review for repo id {0}'.format(repository_id))
 
-    shutil.rmtree(repo_path)
+        repo_path = clone_repo(body)
+        save_patch(body, repo_path)
+        apply_patch(repo_path)
+        save_diff(body, repo_path)
+
+        github_repo = access_to_repo_as_bot(body, BOT_NAME)
+        pull_request, commit = get_pull_request_and_latest_commit(body, github_repo)
+
+        # Todo: record mentioned violations
+        review_repo(repository_id, repo_path, pull_request, commit)
+
+        shutil.rmtree(repo_path)
+
+        logger.info('Repo {0} review successfully completed'.format(repository_id))
+    except Exception as e:
+        logger.exception(e)
+
 

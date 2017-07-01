@@ -185,7 +185,7 @@ LOGGING = {
     'disable_existing_loggers': True,
     'formatters': {
         'verbose': {
-            'format': '\n%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d\n%(message)s\n'
+            'format': '[%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d] %(message)s'
         },
     },
     'handlers': {
@@ -206,6 +206,16 @@ LOGGING = {
     },
     'loggers': {
         'acs': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'formatter': 'verbose'
+        },
+        'repository': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'formatter': 'verbose'
+        },
+        'code_style': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],
             'formatter': 'verbose'
