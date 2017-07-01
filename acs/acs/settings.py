@@ -141,8 +141,8 @@ REST_FRAMEWORK = {
 
 # Celery
 
-CELERY_BROKER_URL = 'amqp://localhost//'
-#CELERY_BROKER_URL = 'amqp://rabbitmq//'
+#CELERY_BROKER_URL = 'amqp://localhost//'
+CELERY_BROKER_URL = 'amqp://rabbitmq//'
 CELERY_RESULT_BACKEND = 'rpc://'
 
 # Dulwich
@@ -167,7 +167,7 @@ LOGIN_REDIRECT_URL = '/auth/complete/'
 
 # Webhook
 
-WEBHOOK_URL = 'http://127.0.0.1/'
+WEBHOOK_URL = 'http://acs.uplatform.ru/api/repository/handle_hook/'
 
 
 # CORS

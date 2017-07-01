@@ -73,7 +73,7 @@ def set_hook(username, repository_id):
         github = Github(username, access_token)
         github_user = github.get_user(username)
         github_repository = github_user.get_repo(repository.name)
-        github_repository.create_hook('web', {'url': settings.WEBHOOK_URL, 'content_type': 'json'}, ['pull_request'],
+        github_repository.create_hook('web', {'url': settings.WEBHOOK_URL + str(repository_id) + '/', 'content_type': 'json'}, ['pull_request'],
                                       True)
         repository.is_connected = True
         repository.save()
