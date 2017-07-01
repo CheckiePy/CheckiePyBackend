@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 import config
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -175,3 +176,39 @@ WEBHOOK_URL = 'http://acs.uplatform.ru/api/repository/handle_hook/'
 CORS_ORIGIN_WHITELIST = ('127.0.0.1:4200', 'localhost:4200')
 CSRF_TRUSTED_ORIGINS = ('127.0.0.1:4200', 'localhost:4200')
 CORS_ALLOW_CREDENTIALS = True
+
+
+# Logging
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '\n%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d\n%(message)s\n'
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': 'logs/debug.log',
+            'when': 'M',
+            'interval': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'acs': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'formatter': 'verbose'
+        },
+    },
+}
