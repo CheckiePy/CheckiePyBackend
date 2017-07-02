@@ -13,7 +13,7 @@ git clone https://github.com/acsproj/acsbackend.git
 cd acsbackend
 python3 -m venv venv
 source venv/bin/activate
-pip3 install git+https://github.com/acsproj/acscore.git@0.7
+pip3 install git+https://github.com/acsproj/acscore.git@0.8
 pip3 install -r requirements.txt
 cd acs
 python3 manage.py runserver
