@@ -142,8 +142,8 @@ REST_FRAMEWORK = {
 
 # Celery
 
-#CELERY_BROKER_URL = 'amqp://localhost//'
-CELERY_BROKER_URL = 'amqp://rabbitmq//'
+CELERY_BROKER_URL = 'amqp://localhost//'
+#CELERY_BROKER_URL = 'amqp://rabbitmq//'
 CELERY_RESULT_BACKEND = 'rpc://'
 
 # Dulwich

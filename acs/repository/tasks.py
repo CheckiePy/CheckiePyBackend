@@ -196,31 +196,32 @@ def review_repo(repository_id, repo_path, pull_request, commit):
     for patch in patch_set:
         file_metrics = counter.metrics_for_file(os.path.join(repo_path, patch.path), verbose=True)
 
-        logger.info('{0}: {1}'.format('METRICS', file_metrics))
+        logger.info('Metrics for file {0} {1}'.format(patch.path, file_metrics))
 
         inspections = analyzer.inspect(file_metrics)
         for hunk in patch:
 
-            logger.info('{0}: {1}'.format('INSPECTIONS', inspections))
+            logger.info('Inspections for file {0} {1}'.format(patch.path, inspections))
 
             for metric_name, inspection_value in inspections.items():
                 for inspection, value in inspection_value.items():
 
-                    logger.info('{0}: {1}'.format('VALUE', value))
+                    logger.info('Inspection {0} has value {1}'.format(inspection, value))
 
                     if inspection in mentioned:
                         continue
                     elif 'lines' not in value:
                         mentioned[inspection] = True
 
-                        logger.info('{0}: {1}'.format('ISSUE COMMENT', value['message']))
+                        logger.info('Issue comment {0} to file {1}'.format(value['message'], patch.path))
 
                         pull_request.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
                     else:
                         for line in value['lines']:
                             if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
 
-                                logger.info('{0}: {1}'.format('COMMENT', value['message']))
+                                logger.info('Comment file {0} on line {1} with message {2}'.format(patch.path, line - hunk.target_start + 1, value['message']))
+                                logger.info('Hunk from {0} to {1}'.format(hunk.target_start, hunk.target_start + hunk.target_length))
 
                                 pull_request.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
 
