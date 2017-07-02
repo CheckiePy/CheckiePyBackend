@@ -199,6 +199,7 @@ def review_repo(repository_id, repo_path, pull_request, commit):
         logger.info('Metrics for file {0} {1}'.format(patch.path, file_metrics))
 
         inspections = analyzer.inspect(file_metrics)
+        first_line_in_diff = patch[0][0].diff_line_no
         for hunk in patch:
 
             logger.info('Inspections for file {0} {1}'.format(patch.path, inspections))
@@ -220,11 +221,14 @@ def review_repo(repository_id, repo_path, pull_request, commit):
                         for line in value['lines']:
                             if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
 
-                                logger.info('Comment file {0} on line {1} with message {2}'.format(patch.path, line - hunk.target_start + 1, value['message']))
+                                line_object = hunk[line - hunk.target_start + 3]
+                                target_line = line_object.diff_line_no - first_line_in_diff
+
+                                logger.info('Calculated line with #{0} and value {1}'.format(line_object.diff_line_no, line_object.value))
+                                logger.info('Comment file {0} on line {1} with message {2}'.format(patch.path, line, value['message']))
                                 logger.info('Hunk from {0} to {1}'.format(hunk.target_start, hunk.target_start + hunk.target_length))
 
-                                pull_request.create_comment(value['message'], commit, patch.path, line - hunk.target_start + 1)
-
+                                pull_request.create_comment(value['message'], commit, patch.path, target_line)
 
 @shared_task
 def handle_hook(json_body, repository_id):
