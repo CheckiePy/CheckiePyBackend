@@ -192,6 +192,8 @@ def review_repo(repository_id, repo_path, pull_request, commit):
     with open(os.path.join(repo_path, DIFF_FILENAME), 'r') as d:
         patch_set = PatchSet(d)
 
+    comments_sent = 0
+
     mentioned = {}
     for patch in patch_set:
         file_metrics = counter.metrics_for_file(os.path.join(repo_path, patch.path), verbose=True)
@@ -217,6 +219,7 @@ def review_repo(repository_id, repo_path, pull_request, commit):
                         logger.info('Issue comment {0} to file {1}'.format(value['message'], patch.path))
 
                         pull_request.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
+                        comments_sent += 1
                     else:
                         for line in value['lines']:
                             if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
@@ -229,6 +232,12 @@ def review_repo(repository_id, repo_path, pull_request, commit):
                                 logger.info('Hunk from {0} to {1}'.format(hunk.target_start, hunk.target_start + hunk.target_length))
 
                                 pull_request.create_comment(value['message'], commit, patch.path, target_line)
+                                comments_sent += 1
+    if comments_sent == 0:
+        pull_request.create_issue_comment('Repository was reviewed. Everything is alright')
+
+        logger.info('Everything is alrigth')
+
 
 @shared_task
 def handle_hook(json_body, repository_id):
