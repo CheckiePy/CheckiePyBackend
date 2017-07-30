@@ -4,6 +4,7 @@ import shutil
 import requests
 import logging
 import io
+import time
 
 from celery import shared_task
 from github import Github
@@ -184,6 +185,9 @@ def get_pull_request_and_latest_commit(body, github_repo):
 def review_repo(repository_id, repo_path, pull_request, commit):
     logger.info('Starting review')
 
+    commit.create_status('pending', 'http://acs.uplatform.ru/', 'Review started.')
+    time.sleep(20) # special delay to debug status
+
     # Todo: refactor
     connection = models.GitRepositoryConnection.objects.get(repository=repository_id)
     repo_metrics = json.loads(connection.code_style.metrics)
@@ -235,8 +239,11 @@ def review_repo(repository_id, repo_path, pull_request, commit):
                                 comments_sent += 1
     if comments_sent == 0:
         pull_request.create_issue_comment('Repository was reviewed. Everything is alright')
+        commit.create_status('success', 'http://acs.uplatform.ru/', 'Review completed. No issue found.')
 
         logger.info('Everything is alrigth')
+    else:
+        commit.create_status('error', 'http://acs.uplatform.ru/', 'Review completed. Found some issues.')
 
 
 @shared_task
