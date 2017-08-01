@@ -76,7 +76,7 @@ def set_hook(username, repository_id):
     try:
         repository = models.GitRepository.objects.get(id=repository_id)
         user, access_token = get_credentials(username)
-        github = Github(config.BOT_AUTH)
+        github = Github(username, access_token)
         github_user = github.get_user(username)
         github_repository = github_user.get_repo(repository.name)
         github_repository.create_hook('web', {'url': settings.WEBHOOK_URL + str(repository_id) + '/', 'content_type': 'json'}, ['pull_request'],
@@ -160,8 +160,7 @@ def access_to_repo_as_bot(body, bot_name):
 
     logger.info('Trying to get access to {0} repo of {1} with bot {2}'.format(repo_name, owner, bot_name))
 
-    user, access_token = get_credentials(bot_name)
-    github = Github(bot_name, access_token)
+    github = Github(config.BOT_AUTH)
     github_user = github.get_user(owner)
     github_repo = github_user.get_repo(repo_name)
 
