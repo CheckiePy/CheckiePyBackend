@@ -27,29 +27,6 @@ celery -A acs worker -l info
 ```
 ### 3. API
 
-#### 3.1. Account
-
-* TODO
-
-#### 3.2. Code Style
-
-##### 3.2.1. Create
-
-*Path:*
-```
-/api/code_style/create/
-```
-
-*Body:*
-```
-{
-    "name": "Name Of Code Style",
-    "repository": "path_to_git_repository"
-}
-```
-
-#### 3.3. Repository
-
 * TODO
 
 # License
