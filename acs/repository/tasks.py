@@ -5,6 +5,7 @@ import requests
 import logging
 import io
 import time
+import config
 
 from celery import shared_task
 from github import Github
@@ -75,7 +76,7 @@ def set_hook(username, repository_id):
     try:
         repository = models.GitRepository.objects.get(id=repository_id)
         user, access_token = get_credentials(username)
-        github = Github(username, access_token)
+        github = Github(config.BOT_AUTH)
         github_user = github.get_user(username)
         github_repository = github_user.get_repo(repository.name)
         github_repository.create_hook('web', {'url': settings.WEBHOOK_URL + str(repository_id) + '/', 'content_type': 'json'}, ['pull_request'],
@@ -185,8 +186,7 @@ def get_pull_request_and_latest_commit(body, github_repo):
 def review_repo(repository_id, repo_path, pull_request, commit):
     logger.info('Starting review')
 
-    commit.create_status('pending', 'http://acs.uplatform.ru/', 'Review started.')
-    time.sleep(20) # special delay to debug status
+    commit.create_status('pending', 'http://acs.uplatform.ru/', 'Review started.', 'acs')
 
     # Todo: refactor
     connection = models.GitRepositoryConnection.objects.get(repository=repository_id)
@@ -239,11 +239,11 @@ def review_repo(repository_id, repo_path, pull_request, commit):
                                 comments_sent += 1
     if comments_sent == 0:
         pull_request.create_issue_comment('Repository was reviewed. Everything is alright')
-        commit.create_status('success', 'http://acs.uplatform.ru/', 'Review completed. No issue found.')
+        commit.create_status('success', 'http://acs.uplatform.ru/', 'Review completed. No issue found.', 'acs')
 
         logger.info('Everything is alrigth')
     else:
-        commit.create_status('error', 'http://acs.uplatform.ru/', 'Review completed. Found some issues.')
+        commit.create_status('error', 'http://acs.uplatform.ru/', 'Review completed. Found some issues.', 'acs')
 
 
 @shared_task
