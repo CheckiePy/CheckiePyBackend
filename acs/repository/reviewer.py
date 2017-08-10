@@ -5,6 +5,15 @@ import requests
 
 from github import Github
 from dulwich import porcelain
+from acscore.counter import Counter
+from acscore.analyzer import Analyzer
+from unidiff import PatchSet
+
+
+SETTINGS = {
+    'name': 'CheckiePy',
+    'url': 'http://checkiepy.com',
+}
 
 
 class Logger:
@@ -12,6 +21,7 @@ class Logger:
         print(text)
 
 
+# TODO: Retrying for all external API requests
 class Reviewer:
     def __init__(self, access_token, logger):
         self.access_token = access_token
@@ -99,68 +109,52 @@ class Reviewer:
         self.logger.info('Commit with sha {0} was obtained'.format(commit.sha))
         return pull_request, commit
 
-    # def review_repo(repository_id, repo_path, pull_request, commit):
-    #     logger.info('Starting review')
-    #
-    #     commit.create_status('pending', 'http://acs.uplatform.ru/', 'Review started.', 'acs')
-    #
-    #     # Todo: refactor
-    #     connection = models.GitRepositoryConnection.objects.get(repository=repository_id)
-    #     repo_metrics = json.loads(connection.code_style.metrics)
-    #     analyzer = Analyzer(repo_metrics)
-    #     counter = Counter()
-    #     with open(os.path.join(repo_path, DIFF_FILENAME), 'r') as d:
-    #         patch_set = PatchSet(d)
-    #
-    #     comments_sent = 0
-    #
-    #     mentioned = {}
-    #     for patch in patch_set:
-    #         file_metrics = counter.metrics_for_file(os.path.join(repo_path, patch.path), verbose=True)
-    #
-    #         logger.info('Metrics for file {0} {1}'.format(patch.path, file_metrics))
-    #
-    #         inspections = analyzer.inspect(file_metrics)
-    #         first_line_in_diff = patch[0][0].diff_line_no
-    #         for hunk in patch:
-    #
-    #             logger.info('Inspections for file {0} {1}'.format(patch.path, inspections))
-    #
-    #             for metric_name, inspection_value in inspections.items():
-    #                 for inspection, value in inspection_value.items():
-    #
-    #                     logger.info('Inspection {0} has value {1}'.format(inspection, value))
-    #
-    #                     if inspection in mentioned:
-    #                         continue
-    #                     elif 'lines' not in value:
-    #                         mentioned[inspection] = True
-    #
-    #                         logger.info('Issue comment {0} to file {1}'.format(value['message'], patch.path))
-    #
-    #                         pull_request.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
-    #                         comments_sent += 1
-    #                     else:
-    #                         for line in value['lines']:
-    #                             if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
-    #
-    #                                 line_object = hunk[line - hunk.target_start + 3]
-    #                                 target_line = line_object.diff_line_no - first_line_in_diff
-    #
-    #                                 logger.info('Calculated line with #{0} and value {1}'.format(line_object.diff_line_no, line_object.value))
-    #                                 logger.info('Comment file {0} on line {1} with message {2}'.format(patch.path, line, value['message']))
-    #                                 logger.info('Hunk from {0} to {1}'.format(hunk.target_start, hunk.target_start + hunk.target_length))
-    #
-    #                                 pull_request.create_comment(value['message'], commit, patch.path, target_line)
-    #                                 comments_sent += 1
-    #     if comments_sent == 0:
-    #         pull_request.create_issue_comment('Repository was reviewed. Everything is alright')
-    #         commit.create_status('success', 'http://acs.uplatform.ru/', 'Review completed. No issue found.', 'acs')
-    #
-    #         logger.info('Everything is alrigth')
-    #     else:
-    #         commit.create_status('error', 'http://acs.uplatform.ru/', 'Review completed. Found some issues.', 'acs')
-    #
+    def review_pull_request(self, metrics, repository_path, diff_path, pull_request, commit):
+        self.logger.info('Review was started')
+        commit.create_status('pending', SETTINGS['url'], 'Review was started', SETTINGS['name'])
+        analyzer = Analyzer(metrics)
+        counter = Counter()
+        with open(os.path.join(repository_path, diff_path), 'r') as f:
+            patch_set = PatchSet(f)
+        sent_inspection_count = 0
+        sent_inspections = {}
+        for patch in patch_set:
+            file_metrics = counter.metrics_for_file(os.path.join(repository_path, patch.path), verbose=True)
+            self.logger.info('Here are metrics for file {0}: {1}'.format(patch.path, file_metrics))
+            inspections = analyzer.inspect(file_metrics)
+            first_line_in_diff = patch[0][0].diff_line_no
+            for hunk in patch:
+                self.logger.info('Here are inspections for file {0}: {1}'.format(patch.path, inspections))
+                for metric_name, inspection_value in inspections.items():
+                    for inspection, value in inspection_value.items():
+                        self.logger.info('Inspection {0} has value {1}'.format(inspection, value))
+                        if inspection in sent_inspections:
+                            continue
+                        elif 'lines' not in value:
+                            sent_inspections[inspection] = True
+                            self.logger.info('Issuing comment {0} for file {1}'.format(value['message'], patch.path))
+                            pull_request.create_issue_comment('{0}:\n{1}'.format(patch.path, value['message']))
+                            sent_inspection_count += 1
+                        else:
+                            for line in value['lines']:
+                                if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
+                                    # TODO: What is 3 here?
+                                    line_object = hunk[line - hunk.target_start + 3]
+                                    target_line = line_object.diff_line_no - first_line_in_diff
+                                    self.logger.info('Line with number {0} and value {1} was calculated\n'
+                                                     'File {2} was commented on line {3} with message {4}\n'
+                                                     'Hunk is from line {5} to line {6}'
+                                                     .format(line_object.diff_line_no, line_object.value, patch.path,
+                                                             line, value['message'], hunk.target_start,
+                                                             hunk.target_start + hunk.target_length))
+                                    pull_request.create_comment(value['message'], commit, patch.path, target_line)
+                                    sent_inspection_count += 1
+        if sent_inspection_count == 0:
+            commit.create_status('success', SETTINGS['url'], 'Review was completed. No issues found', SETTINGS['name'])
+        else:
+            commit.create_status('error', SETTINGS['url'], 'Review was completed. Found some issues', SETTINGS['name'])
+        self.logger.info('Review was completed. {0} issues found'.format(sent_inspection_count))
+
     #
     # @shared_task
     # def handle_hook(json_body, repository_id):
