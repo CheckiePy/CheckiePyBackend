@@ -1,10 +1,10 @@
 import os
 import io
 import shutil
-import porcelain
 import requests
 
 from github import Github
+from dulwich import porcelain
 
 
 class Logger:
@@ -25,15 +25,17 @@ class Reviewer:
     #         result += line.decode() + '\n'
     #     return result
 
-    def load_repositories(self, username):
+    def get_repositories(self, username):
+        self.logger.info("Obtaining of {0}'s repositories was started".format(username))
         repositories = self.github.get_user(username).get_repos()
-        for repository in repositories:
-            # user, name
-            print(repository)
+        self.logger.info('Repositories was obtained')
+        return repositories
 
-    def create_pull_hook(self, username, repository_name, callback_url):
+    def create_pull_request_hook(self, username, repository_name, callback_url):
+        self.logger.info('Setting of pull request web hook was started')
         github_repository = self.github.get_user(username).get_repo(repository_name)
         github_repository.create_hook('web', {'url': callback_url, 'content_type': 'json'}, ['pull_request'], True)
+        self.logger.info('Pull request web hook was successfully set')
 
     #
     #
@@ -46,30 +48,21 @@ class Reviewer:
     #
 
     def clone_repository(self, clone_url, save_path):
-        self.logger.info('Repository cloning from {0} to {1} started'.format(clone_url, save_path))
-
+        self.logger.info('Repository cloning from {0} to {1} was started'.format(clone_url, save_path))
         if os.path.exists(save_path):
-
             self.logger.info('Directory {0} already exists. It will be deleted'.format(save_path))
-
             shutil.rmtree(save_path)
-
         bytes_io = io.BytesIO()
         porcelain.clone(clone_url, save_path, errstream=bytes_io)
-
         self.logger.info(bytes_io.getvalue().decode())
         self.logger.info('Repository was cloned successfully')
 
-    def load_file(self, file_url, save_path):
-        self.logger.info('File downloading from {0} to {1} started'.format(file_url, save_path))
-
+    def get_file(self, file_url, save_path):
+        self.logger.info('File downloading from {0} to {1} was started'.format(file_url, save_path))
         file = requests.get(file_url)
-
         self.logger.info('File {0} was downloaded successfully'.format(file_url))
-
         with open(save_path, 'w') as f:
             f.write(file.content.decode())
-
             self.logger.info('File {0} was saved successfully'.format(save_path))
 
     #
@@ -96,21 +89,16 @@ class Reviewer:
     #     logger.info('Access successfully gained')
     #
     #     return github_repo
-    #
-    #
-    # def get_pull_request_and_latest_commit(body, github_repo):
-    #     pull_request = github_repo.get_pull(body[NUMBER])
-    #
-    #     logger.info('Got pull request with titile {0} and number {1}'.format(pull_request.title, pull_request.number))
-    #
-    #     # Todo: check if comment to latest commit is ok when style violation in previous commit
-    #     commit = pull_request.get_commits().reversed[0]
-    #
-    #     logger.info('Got commit with sha {0}'.format(commit.sha))
-    #
-    #     return pull_request, commit
-    #
-    #
+
+    def get_pull_request_and_latest_commit(self, username, repository_name, pull_request_number):
+        self.logger.info('Obtaining of pull request with number {0} from repository {1}/{2} was started'.format(
+            pull_request_number, username, repository_name))
+        pull_request = self.github.get_user(username).get_repo(repository_name).get_pull(pull_request_number)
+        self.logger.info('Pull request with name {0} was obtained\nObtaining of latest commit was started'.format(pull_request.title))
+        commit = pull_request.get_commits().reversed[0]
+        self.logger.info('Commit with sha {0} was obtained'.format(commit.sha))
+        return pull_request, commit
+
     # def review_repo(repository_id, repo_path, pull_request, commit):
     #     logger.info('Starting review')
     #
