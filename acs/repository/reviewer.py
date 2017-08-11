@@ -8,17 +8,74 @@ from dulwich import porcelain
 from acscore.counter import Counter
 from acscore.analyzer import Analyzer
 from unidiff import PatchSet
+from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 
 
 SETTINGS = {
     'name': 'CheckiePy',
     'url': 'http://checkiepy.com',
+    'attempt': 3,
+    'multiplier': 2,
+    'max': 10,
 }
 
 
 class Logger:
     def info(self, text):
         print(text)
+
+
+class Requester:
+    def __init__(self, access_token):
+        self.github = Github(access_token)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def get_repositories(self, username):
+        return self.github.get_user(username).get_repos()
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def create_pull_request_hook(self, username, repository_name, callback_url):
+        self.github.get_user(username).get_repo(repository_name)\
+            .create_hook('web', {'url': callback_url, 'content_type': 'json'}, ['pull_request'], True)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def clone_repository(self, clone_url, save_path, bytes_io):
+        if os.path.exists(save_path):
+            shutil.rmtree(save_path)
+        porcelain.clone(clone_url, save_path, errstream=bytes_io)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def get_file(self, file_url):
+        return requests.get(file_url)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def get_pull_request(self, username, repository_name, pull_request_number):
+        return self.github.get_user(username).get_repo(repository_name).get_pull(pull_request_number)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def get_latest_commit_from_pull_request(self, pull_request):
+        return pull_request.get_commits().reversed[0]
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def create_status(self, commit, state, target_url, description, context):
+        commit.create_status(state, target_url, description, context)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def create_issue_comment(self, pull_request, text):
+        pull_request.create_issue_comment(text)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def create_comment(self, pull_request, commit, text, file, line):
+        pull_request.create_comment(text, commit, file, line)
 
 
 # TODO: Retrying for all external API requests
