@@ -9,6 +9,8 @@ from acscore.counter import Counter
 from acscore.analyzer import Analyzer
 from unidiff import PatchSet
 from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
+from subprocess import Popen, PIPE, STDOUT
+from django.conf import settings
 
 
 SETTINGS = {
@@ -17,6 +19,7 @@ SETTINGS = {
     'attempt': 3,
     'multiplier': 2,
     'max': 10,
+    'apply': '{0}/bash/apply_patch.sh'.format(settings.BASE_DIR),
 }
 
 
@@ -83,12 +86,12 @@ class Reviewer:
         self.requester = requester
         self.logger = logger
 
-    # def run_command(command):
-    #     p = Popen(command, stdout=PIPE, stderr=STDOUT)
-    #     result = ''
-    #     for line in p.stdout.readlines():
-    #         result += line.decode() + '\n'
-    #     return result
+    def run_command(self, command):
+        p = Popen(command, stdout=PIPE, stderr=STDOUT)
+        result = ''
+        for line in p.stdout.readlines():
+            result += line.decode() + '\n'
+        return result
 
     def get_repositories(self, username):
         self.logger.info("Obtaining of {0}'s repositories was started".format(username))
@@ -100,12 +103,6 @@ class Reviewer:
         self.logger.info('Setting of pull request web hook was started')
         self.requester.create_pull_request_hook(username, repository_name, callback_url)
         self.logger.info('Pull request web hook was successfully set')
-
-    # def is_need_to_handle_hook(body):
-    #     # We need to check repo only if pull request is newly created or received a new commit.
-    #     if ACTION in body and (body[ACTION] == OPENED or body[ACTION] == SYNCHRONIZE):
-    #         return True
-    #     return False
 
     def clone_repository(self, clone_url, save_path):
         self.logger.info('Repository cloning from {0} to {1} was started'.format(clone_url, save_path))
@@ -125,17 +122,11 @@ class Reviewer:
             f.write(file.content.decode())
             self.logger.info('File {0} was saved successfully'.format(save_path))
 
-    #
-    # def apply_patch(repo_path):
-    #     logger.info('Applying the patch')
-    #
-    #     # Todo: pass patch filename as argument
-    #     message = run_command(["{0}/bash/applypatch.sh".format(settings.BASE_DIR), repo_path])
-    #
-    #     logger.info(message)
-    #
-    #
-    #
+    def apply_patch(self, repository_path, patch_path):
+        self.logger.info('Applying of the patch was started')
+        message = self.run_command([SETTINGS['apply'], repository_path, patch_path])
+        self.logger.info('{0}\nApplying of the patch was completed'.format(message))
+
     # def access_to_repo_as_bot(body, bot_name):
     #     repo_name = body[REPOSITORY][NAME]
     #     owner = body[REPOSITORY][OWNER][LOGIN]
