@@ -201,33 +201,19 @@ class Reviewer:
                                          SETTINGS['name'])
         self.logger.info('Review was completed. {0} issues found'.format(sent_inspection_count))
 
-    #
-    # @shared_task
-    # def handle_hook(json_body, repository_id):
-    #
-    #     print(logger)
-    #
-    #     try:
-    #         body = json.loads(json_body)
-    #
-    #         if not is_need_to_handle_hook(body):
-    #             return
-    #
-    #         logger.info('Started review for repo id {0}'.format(repository_id))
-    #
-    #         repo_path = clone_repo(body)
-    #         save_patch(body, repo_path)
-    #         apply_patch(repo_path)
-    #         save_diff(body, repo_path)
-    #
-    #         github_repo = access_to_repo_as_bot(body, BOT_NAME)
-    #         pull_request, commit = get_pull_request_and_latest_commit(body, github_repo)
-    #
-    #         # Todo: record mentioned violations
-    #         review_repo(repository_id, repo_path, pull_request, commit)
-    #
-    #         shutil.rmtree(repo_path)
-    #
-    #         logger.info('Repo {0} review successfully completed'.format(repository_id))
-    #     except Exception as e:
-    #         logger.exception(e)
+    def path_basename(self, path):
+        return os.path.basename(os.path.normpath(path))
+
+    def handle_hook(self, username, pull_request_number, metrics, base_path, clone_url, patch_url, diff_url):
+        self.logger.info('Handling of hook for repository {0} was started'.format(clone_url))
+        repository_name = os.path.splitext(self.path_basename(clone_url))[0]
+        repository_path = os.path.join(base_path, repository_name)
+        self.clone_repository(clone_url, repository_path)
+        patch_path = os.path.join(repository_path, self.path_basename(patch_url))
+        self.get_file(patch_url, patch_path)
+        self.apply_patch(repository_path, patch_path)
+        diff_path = os.path.join(repository_path, self.path_basename(diff_url))
+        self.get_file(diff_url, diff_path)
+        pull_request, commit = self.get_pull_request_and_latest_commit(username, repository_name, pull_request_number)
+        self.review_pull_request(metrics, repository_path, diff_path, pull_request, commit)
+        self.logger.info('Hook for repository {0} was successfully processed'.format(clone_url))
