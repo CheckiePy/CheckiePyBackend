@@ -33,7 +33,7 @@ def load_user_repositories(username, update_id):
             models.GitRepository.objects.get_or_create(user=user, name=repository.name)
         update.status = 'C'
     except Exception as e:
-        print(e)
+        logger.exception(e)
         update.status = 'F'
     finally:
         update.save()
@@ -47,7 +47,7 @@ def set_hook(username, repository_id):
         repository.is_connected = True
         repository.save()
     except Exception as e:
-        print(e)
+        logger.exception(e)
 
 
 def is_need_to_handle_hook(body):
