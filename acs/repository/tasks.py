@@ -3,7 +3,6 @@ import logging
 import config
 
 from celery import shared_task
-from github import Github
 from django.contrib.auth.models import User
 from django.conf import settings
 from social_django.models import UserSocialAuth
@@ -12,7 +11,9 @@ from . import models
 from .reviewer import Requester, Reviewer
 
 
+requester = Requester(config.BOT_AUTH)
 logger = logging.getLogger(__name__)
+reviewer = Reviewer(requester, logger)
 
 
 def get_credentials(username):
@@ -27,8 +28,7 @@ def load_user_repositories(username, update_id):
     update = models.GitRepositoryUpdate.objects.get(id=update_id)
     try:
         user, access_token = get_credentials(username)
-        github = Github(username, access_token)
-        repositories = github.get_user().get_repos()
+        repositories = reviewer.get_repositories(username)
         for repository in repositories:
             models.GitRepository.objects.get_or_create(user=user, name=repository.name)
         update.status = 'C'
@@ -43,12 +43,7 @@ def load_user_repositories(username, update_id):
 def set_hook(username, repository_id):
     try:
         repository = models.GitRepository.objects.get(id=repository_id)
-        user, access_token = get_credentials(username)
-        github = Github(username, access_token)
-        github_user = github.get_user(username)
-        github_repository = github_user.get_repo(repository.name)
-        github_repository.create_hook('web', {'url': settings.WEBHOOK_URL + str(repository_id) + '/', 'content_type': 'json'}, ['pull_request'],
-                                      True)
+        reviewer.create_pull_request_hook(username, repository.name, settings.WEBHOOK_URL + str(repository_id) + '/')
         repository.is_connected = True
         repository.save()
     except Exception as e:
@@ -74,8 +69,6 @@ def handle_hook(json_body, repository_id):
         clone_url = body['repository']['clone_url']
         patch_url = body['pull_request']['patch_url']
         diff_url = body['pull_request']['diff_url']
-        requester = Requester(config.BOT_AUTH)
-        reviewer = Reviewer(requester, logger)
         reviewer.handle_hook(username, pull_request_number, metrics, base_path, clone_url, patch_url, diff_url)
     except Exception as e:
         logger.exception(e)
