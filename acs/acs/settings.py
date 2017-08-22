@@ -88,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'checkiepy',
         'USER': 'checkiepy',
-        'PASSWORD': '',
+        'PASSWORD': 'checkiepy',
         'HOST': 'localhost',
         'PORT': '',
     }
