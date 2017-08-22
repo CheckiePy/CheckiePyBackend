@@ -73,9 +73,7 @@ def disconnect_repository(request):
         connection = models.GitRepositoryConnection.objects.filter(repository=serializer.data['id']).first()
         if not connection:
             return Response({'detail': 'Repository connection not found'}, status.HTTP_404_NOT_FOUND)
-        # Todo: github request to delete webhook
-        connection.repository.is_connected = False
-        connection.repository.save()
+        tasks.delete_hook.delay(request.user.username, connection.repository.id)
         connection.delete()
         return Response({'result': serializer.data['id']}, status.HTTP_200_OK)
     return Response({'detail': 'You should specify repository id'}, status.HTTP_400_BAD_REQUEST)

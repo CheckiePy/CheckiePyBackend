@@ -45,6 +45,14 @@ class Requester:
 
     @retry(stop=stop_after_attempt(SETTINGS['attempt']),
            wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def delete_pull_request_hook(self, username, repository_name, callback_url):
+        hooks = self.github.get_user(username).get_repo(repository_name).get_hooks()
+        for hook in hooks:
+            if hook.config['url'] == callback_url:
+                hook.delete()
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
     def clone_repository(self, clone_url, save_path, bytes_io):
         if os.path.exists(save_path):
             shutil.rmtree(save_path)
@@ -103,6 +111,13 @@ class Reviewer:
         self.logger.info('Setting of pull request web hook was started')
         self.requester.create_pull_request_hook(username, repository_name, callback_url)
         self.logger.info('Pull request web hook was successfully set')
+
+    def delete_pull_request_hook(self, username, repository_name, callback_url):
+        self.logger.info('Deleting of pull request web hook for repository {0}/{1} was started'.format(username,
+                                                                                                       repository_name))
+        self.requester.delete_pull_request_hook(username, repository_name, callback_url)
+        self.logger.info('Pull request web hook for repository {0}/{1} was successfully deleted'.format(username,
+                                                                                                        repository_name))
 
     def clone_repository(self, clone_url, save_path):
         self.logger.info('Repository cloning from {0} to {1} was started'.format(clone_url, save_path))

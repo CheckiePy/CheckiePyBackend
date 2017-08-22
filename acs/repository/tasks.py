@@ -50,6 +50,17 @@ def set_hook(username, repository_id):
         logger.exception(e)
 
 
+@shared_task
+def delete_hook(username, repository_id):
+    try:
+        repository = models.GitRepository.objects.get(id=repository_id)
+        reviewer.delete_pull_request_hook(username, repository.name, settings.WEBHOOK_URL + str(repository_id) + '/')
+        repository.is_connected = False
+        repository.save()
+    except Exception as e:
+        logger.exception(e)
+
+
 def is_need_to_handle_hook(body):
     # We need to check repo only if pull request is newly created or received a new commit
     return 'action' in body and (body['action'] == 'opened' or body['action'] == 'synchronize')
