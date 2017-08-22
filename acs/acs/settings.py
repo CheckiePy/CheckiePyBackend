@@ -85,8 +85,12 @@ WSGI_APPLICATION = 'acs.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'checkiepy',
+        'USER': 'checkiepy',
+        'PASSWORD': 'checkiepy',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 
@@ -160,7 +164,7 @@ AUTHENTICATION_BACKENDS = (
 
 SOCIAL_AUTH_GITHUB_KEY = config.CLIENT_ID
 SOCIAL_AUTH_GITHUB_SECRET = config.CLIENT_SECRET
-SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'admin:repo_hook']
+SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'admin:repo_hook'] # TODO: check if admin:repo_hook is required
 
 LOGIN_URL = '/auth/complete/'
 LOGIN_REDIRECT_URL = '/auth/complete/'
