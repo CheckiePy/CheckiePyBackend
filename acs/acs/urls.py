@@ -23,5 +23,5 @@ urlpatterns = [
     url(r'^api/', include('api.urls', namespace='api')),
     url('', include('social_django.urls', namespace='social')),
     url(r'^auth/complete/', views.auth_complete),
-    url(r'^$', views.index),
+#    url(r'^$', views.index),
 ]

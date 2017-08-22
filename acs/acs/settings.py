@@ -27,7 +27,7 @@ SECRET_KEY = '2a-xkm6bps8c-t+y#21r$tkn#x*0eehz5xy%8smai!_lxr**g6'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['acs.uplatform.ru', '127.0.0.1']
+ALLOWED_HOSTS = ['checkiepy.com', 'acs.uplatform.ru', '127.0.0.1']
 
 
 # Application definition
