@@ -173,7 +173,7 @@ LOGIN_REDIRECT_URL = '/auth/complete/'
 
 # Webhook
 
-WEBHOOK_URL = 'http://checkiepy.com/api/repository/handle_hook/'
+WEBHOOK_URL = 'https://checkiepy.com/api/repository/handle_hook/'
 
 
 # CORS
