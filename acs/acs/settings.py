@@ -89,7 +89,8 @@ DATABASES = {
         'NAME': 'checkiepy',
         'USER': 'checkiepy',
         'PASSWORD': 'checkiepy',
-        'HOST': 'localhost',
+#        'HOST': 'localhost',
+        'HOST': 'postgres',
         'PORT': '',
     }
 }
