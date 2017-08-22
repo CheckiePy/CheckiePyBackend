@@ -11,9 +11,7 @@ from . import models
 from .reviewer import Requester, Reviewer
 
 
-requester = Requester(config.BOT_AUTH)
 logger = logging.getLogger(__name__)
-reviewer = Reviewer(requester, logger)
 
 
 def get_credentials(username):
@@ -28,6 +26,7 @@ def load_user_repositories(username, update_id):
     update = models.GitRepositoryUpdate.objects.get(id=update_id)
     try:
         user, access_token = get_credentials(username)
+        reviewer = get_reviewer(username)
         repositories = reviewer.get_repositories(username)
         for repository in repositories:
             models.GitRepository.objects.get_or_create(user=user, name=repository.name)
@@ -39,9 +38,17 @@ def load_user_repositories(username, update_id):
         update.save()
 
 
+def get_reviewer(username):
+    user, access_token = get_credentials(username)
+    requester = Requester(access_token)
+    reviewer = Reviewer(requester, logger)
+    return reviewer
+
+
 @shared_task
 def set_hook(username, repository_id):
     try:
+        reviewer = get_reviewer(username)
         repository = models.GitRepository.objects.get(id=repository_id)
         reviewer.create_pull_request_hook(username, repository.name, settings.WEBHOOK_URL + str(repository_id) + '/')
         repository.is_connected = True
@@ -53,6 +60,7 @@ def set_hook(username, repository_id):
 @shared_task
 def delete_hook(username, repository_id):
     try:
+        reviewer = get_reviewer(username)
         repository = models.GitRepository.objects.get(id=repository_id)
         reviewer.delete_pull_request_hook(username, repository.name, settings.WEBHOOK_URL + str(repository_id) + '/')
         repository.is_connected = False
@@ -80,6 +88,8 @@ def handle_hook(json_body, repository_id):
         clone_url = body['repository']['clone_url']
         patch_url = body['pull_request']['patch_url']
         diff_url = body['pull_request']['diff_url']
+        requester = Requester(config.BOT_AUTH)
+        reviewer = Reviewer(requester, logger)
         reviewer.handle_hook(username, pull_request_number, metrics, base_path, clone_url, patch_url, diff_url)
     except Exception as e:
         logger.exception(e)
