@@ -6,7 +6,7 @@ from . import models
 class GitRepositorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GitRepository
-        fields = ('id', 'name', 'is_connected')
+        fields = ('id', 'name', 'is_connected', 'code_style_name')
 
 
 class GitRepositoryUpdateSerializer(serializers.ModelSerializer):

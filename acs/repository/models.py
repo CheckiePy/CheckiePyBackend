@@ -7,6 +7,7 @@ class GitRepository(models.Model):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=255)
     is_connected = models.BooleanField(default=False)
+    code_style_name = models.CharField(max_length=255, default='')
 
     def __str__(self):
         return '{}. {}'.format(self.id, self.name)
