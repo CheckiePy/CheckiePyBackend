@@ -1,6 +1,6 @@
 FROM python:3.5
 ENV PYTHONUNBUFFERED 1
 COPY requirements.txt /
-RUN pip install git+https://github.com/acsproj/acscore.git@0.12
+RUN pip install git+https://github.com/acsproj/acscore.git@0.14
 RUN pip install -r requirements.txt
 WORKDIR /src/
