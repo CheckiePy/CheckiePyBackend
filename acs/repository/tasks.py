@@ -46,12 +46,13 @@ def get_reviewer(username):
 
 
 @shared_task
-def set_hook(username, repository_id):
+def set_hook(username, repository_id, code_style_name):
     try:
         reviewer = get_reviewer(username)
         repository = models.GitRepository.objects.get(id=repository_id)
         reviewer.create_pull_request_hook(username, repository.name, settings.WEBHOOK_URL + str(repository_id) + '/')
         repository.is_connected = True
+        repository.code_style_name = code_style_name
         repository.save()
     except Exception as e:
         logger.exception(e)

@@ -58,9 +58,8 @@ def connect_repository(request):
         if repository.is_connected:
             return Response({'detail': 'Repository already connected'}, status.HTTP_400_BAD_REQUEST)
         code_style = code_style_models.CodeStyle.objects.filter(id=serializer.data['code_style']).first()
-        repository.code_style_name = code_style.name
         models.GitRepositoryConnection.objects.create(repository=repository, code_style=code_style)
-        tasks.set_hook.delay(request.user.username, repository.id)
+        tasks.set_hook.delay(request.user.username, repository.id, code_style.name)
         return Response({'result': serializer.data}, status.HTTP_200_OK)
     return Response({'detail': 'Required fields does not specified or objects does not exists'}, status.HTTP_400_BAD_REQUEST)
 
