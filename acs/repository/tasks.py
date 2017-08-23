@@ -89,8 +89,7 @@ def handle_hook(json_body, repository_id):
         clone_url = body['repository']['clone_url']
         patch_url = body['pull_request']['patch_url']
         diff_url = body['pull_request']['diff_url']
-        requester = Requester(config.BOT_AUTH)
-        reviewer = Reviewer(requester, logger)
+        reviewer = get_reviewer(username)
         reviewer.handle_hook(username, pull_request_number, metrics, base_path, clone_url, patch_url, diff_url)
     except Exception as e:
         logger.exception(e)
