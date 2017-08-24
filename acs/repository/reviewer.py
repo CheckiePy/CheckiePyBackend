@@ -211,7 +211,7 @@ class Reviewer:
                                                                           value['message'], commit, patch.path, target_line)
                                         sent_inspection_count += 1
                                     except Exception as e:
-                                        self.logger.info('Hunk processing failed with exception {0} for hunk line {1}'
+                                        self.logger.info('Hunk processing failed with exception {0} for hunk line {1} '
                                                          '(source length {2}, target length {3})'
                                                          .format(e, hunk_line, len(hunk.source), len(hunk.target)))
         if sent_inspection_count == 0:
