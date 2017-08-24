@@ -24,5 +24,8 @@ class GitRepositoryConnection(models.Model):
     repository = models.ForeignKey(GitRepository)
     code_style = models.ForeignKey(code_style_models.CodeStyle)
 
+    class Meta:
+        unique_together = ('repository', 'code_style')
+
     def __str__(self):
         return 'CodeStyle: {} | Repository: {}'.format(self.code_style.id, self.repository.id)
