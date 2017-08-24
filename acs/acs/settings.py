@@ -165,7 +165,7 @@ AUTHENTICATION_BACKENDS = (
 
 SOCIAL_AUTH_GITHUB_KEY = config.CLIENT_ID
 SOCIAL_AUTH_GITHUB_SECRET = config.CLIENT_SECRET
-SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'admin:repo_hook'] # TODO: check if admin:repo_hook is required
+SOCIAL_AUTH_GITHUB_SCOPE = ['repo:status', 'admin:repo_hook']
 
 LOGIN_URL = '/auth/complete/'
 LOGIN_REDIRECT_URL = '/auth/complete/'
