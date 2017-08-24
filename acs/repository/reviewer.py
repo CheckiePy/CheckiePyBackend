@@ -196,9 +196,9 @@ class Reviewer:
                         else:
                             for line in value['lines']:
                                 if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
+                                    # 3 is offset for unidiff hunk header
+                                    hunk_line = line - hunk.target_start + 3
                                     try:
-                                        # 3 is offset for unidiff hunk header
-                                        hunk_line = line - hunk.target_start + 3
                                         line_object = hunk[hunk_line]
                                         target_line = line_object.diff_line_no - first_line_in_diff
                                         self.logger.info('Line with number {0} and value {1} was calculated\n'
