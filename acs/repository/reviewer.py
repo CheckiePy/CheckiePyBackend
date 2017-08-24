@@ -29,8 +29,10 @@ class Logger:
 
 
 class Requester:
-    def __init__(self, access_token):
+    def __init__(self, access_token, bot_access_token=None):
         self.github = Github(access_token)
+        if bot_access_token:
+            self.bot = Github(bot_access_token)
 
     @retry(stop=stop_after_attempt(SETTINGS['attempt']),
            wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
@@ -88,6 +90,17 @@ class Requester:
     def create_comment(self, pull_request, text, commit, file, line):
         pull_request.create_comment(text, commit, file, line)
 
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def create_issue_comment_bot(self, username, repository_name, pull_request_number, text):
+        self.bot.get_user(username).get_repo(repository_name).get_pull(pull_request_number).create_issue_comment(text)
+
+    @retry(stop=stop_after_attempt(SETTINGS['attempt']),
+           wait=wait_exponential(multiplier=SETTINGS['multiplier'], max=SETTINGS['max']))
+    def create_comment_bot(self, username, repository_name, pull_request_number, text, commit, file, line):
+        self.bot.get_user(username).get_repo(repository_name).get_pull(pull_request_number).create_comment(text, commit,
+                                                                                                           file, line)
+
 
 class Reviewer:
     def __init__(self, requester, logger):
@@ -142,20 +155,6 @@ class Reviewer:
         message = self.run_command([SETTINGS['apply'], repository_path, patch_path])
         self.logger.info('{0}\nApplying of the patch was completed'.format(message))
 
-    # def access_to_repo_as_bot(body, bot_name):
-    #     repo_name = body[REPOSITORY][NAME]
-    #     owner = body[REPOSITORY][OWNER][LOGIN]
-    #
-    #     logger.info('Trying to get access to {0} repo of {1} with bot {2}'.format(repo_name, owner, bot_name))
-    #
-    #     github = Github(config.BOT_AUTH)
-    #     github_user = github.get_user(owner)
-    #     github_repo = github_user.get_repo(repo_name)
-    #
-    #     logger.info('Access successfully gained')
-    #
-    #     return github_repo
-
     def get_pull_request_and_latest_commit(self, username, repository_name, pull_request_number):
         self.logger.info('Obtaining of pull request with number {0} from repository {1}/{2} was started'.format(
             pull_request_number, username, repository_name))
@@ -166,7 +165,8 @@ class Reviewer:
         self.logger.info('Commit with sha {0} was obtained'.format(commit.sha))
         return pull_request, commit
 
-    def review_pull_request(self, metrics, repository_path, diff_path, pull_request, commit):
+    def review_pull_request(self, metrics, repository_path, diff_path, commit, username, repository_name,
+                            pull_request_number):
         self.logger.info('Review was started')
         self.requester.create_status(commit, 'pending', SETTINGS['url'], 'Review was started', SETTINGS['name'])
         analyzer = Analyzer(metrics)
@@ -190,8 +190,8 @@ class Reviewer:
                         elif 'lines' not in value:
                             sent_inspections[inspection] = True
                             self.logger.info('Issuing comment {0} for file {1}'.format(value['message'], patch.path))
-                            self.requester.create_issue_comment(pull_request, '{0}:\n{1}'.format(patch.path,
-                                                                                                 value['message']))
+                            self.requester.create_issue_comment_bot(username, repository_name, pull_request_number,
+                                                                '{0}:\n{1}'.format(patch.path, value['message']))
                             sent_inspection_count += 1
                         else:
                             for line in value['lines']:
@@ -205,8 +205,8 @@ class Reviewer:
                                                      .format(line_object.diff_line_no, line_object.value, patch.path,
                                                              line, value['message'], hunk.target_start,
                                                              hunk.target_start + hunk.target_length))
-                                    self.requester.create_comment(pull_request, value['message'], commit, patch.path,
-                                                                  target_line)
+                                    self.requester.create_comment_bot(username, repository_name, pull_request_number,
+                                                                      value['message'], commit, patch.path, target_line)
                                     sent_inspection_count += 1
         if sent_inspection_count == 0:
             self.requester.create_status(commit, 'success', SETTINGS['url'], 'Review was completed. No issues found',
@@ -230,5 +230,6 @@ class Reviewer:
         diff_path = os.path.join(repository_path, self.path_basename(diff_url))
         self.get_file(diff_url, diff_path)
         pull_request, commit = self.get_pull_request_and_latest_commit(username, repository_name, pull_request_number)
-        self.review_pull_request(metrics, repository_path, diff_path, pull_request, commit)
+        self.review_pull_request(metrics, repository_path, diff_path, commit, username, repository_name,
+                                 pull_request_number)
         self.logger.info('Hook for repository {0} was successfully processed'.format(clone_url))

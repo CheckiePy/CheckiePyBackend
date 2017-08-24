@@ -1,6 +1,5 @@
 import json
 import logging
-import config
 
 from celery import shared_task
 from django.contrib.auth.models import User
@@ -89,7 +88,10 @@ def handle_hook(json_body, repository_id):
         clone_url = body['repository']['clone_url']
         patch_url = body['pull_request']['patch_url']
         diff_url = body['pull_request']['diff_url']
-        reviewer = get_reviewer(username)
+        user, access_token = get_credentials(username)
+        bot, bot_access_token = get_credentials(settings.BOT_NAME)
+        requester = Requester(access_token, bot_access_token)
+        reviewer = Reviewer(requester, logger)
         reviewer.handle_hook(username, pull_request_number, metrics, base_path, clone_url, patch_url, diff_url)
     except Exception as e:
         logger.exception(e)
