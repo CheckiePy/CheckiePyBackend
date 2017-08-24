@@ -196,18 +196,24 @@ class Reviewer:
                         else:
                             for line in value['lines']:
                                 if hunk.target_start <= line <= hunk.target_start + hunk.target_length:
-                                    # TODO: What is 3 here?
-                                    line_object = hunk[line - hunk.target_start + 3]
-                                    target_line = line_object.diff_line_no - first_line_in_diff
-                                    self.logger.info('Line with number {0} and value {1} was calculated\n'
-                                                     'File {2} was commented on line {3} with message {4}\n'
-                                                     'Hunk is from line {5} to line {6}'
-                                                     .format(line_object.diff_line_no, line_object.value, patch.path,
-                                                             line, value['message'], hunk.target_start,
-                                                             hunk.target_start + hunk.target_length))
-                                    self.requester.create_comment_bot(username, repository_name, pull_request_number,
-                                                                      value['message'], commit, patch.path, target_line)
-                                    sent_inspection_count += 1
+                                    try:
+                                        # 3 is offset for unidiff hunk header
+                                        hunk_line = line - hunk.target_start + 3
+                                        line_object = hunk[hunk_line]
+                                        target_line = line_object.diff_line_no - first_line_in_diff
+                                        self.logger.info('Line with number {0} and value {1} was calculated\n'
+                                                         'File {2} was commented on line {3} with message {4}\n'
+                                                         'Hunk is from line {5} to line {6}'
+                                                         .format(line_object.diff_line_no, line_object.value, patch.path,
+                                                                 line, value['message'], hunk.target_start,
+                                                                 hunk.target_start + hunk.target_length))
+                                        self.requester.create_comment_bot(username, repository_name, pull_request_number,
+                                                                          value['message'], commit, patch.path, target_line)
+                                        sent_inspection_count += 1
+                                    except Exception as e:
+                                        self.logger.info('Hunk processing failed with exception {0} for hunk line {1}'
+                                                         '(source length {2}, target length {3})'
+                                                         .format(e, hunk_line, len(hunk.source), len(hunk.target)))
         if sent_inspection_count == 0:
             self.requester.create_status(commit, 'success', SETTINGS['url'], 'Review was completed. No issues found',
                                          SETTINGS['name'])
