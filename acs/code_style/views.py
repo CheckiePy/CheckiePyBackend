@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from . import serializers
 from . import tasks
 from . import models
+from repository import models as repository_models
+from repository import tasks as repository_tasks
 
 
 @api_view(['POST'])
@@ -58,6 +60,10 @@ def delete_code_style(request):
         code_style = models.CodeStyle.objects.filter(id=id, user=request.user).first()
         if not code_style:
             return Response({'detail': 'Code style not found'}, status.HTTP_404_NOT_FOUND)
+        connections = repository_models.GitRepositoryConnection.objects.filter(code_style=code_style)
+        for connection in connections:
+            repository_tasks.delete_hook.delay(request.user.username, connection.repository.id)
+            connection.delete()
         code_style.delete()
         return Response({'result': id}, status.HTTP_200_OK)
     return Response({'detail': 'You should provide code style id'}, status.HTTP_400_BAD_REQUEST)
