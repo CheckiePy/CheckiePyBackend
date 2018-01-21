@@ -1,5 +1,4 @@
 from django.shortcuts import redirect
-from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from rest_framework.authtoken.models import Token
 
@@ -8,7 +7,3 @@ from rest_framework.authtoken.models import Token
 def auth_complete(request):
     token, status = Token.objects.get_or_create(user=request.user)
     return redirect('/?token={}'.format(token))
-
-
-def index(request):
-    return redirect('/admin/')

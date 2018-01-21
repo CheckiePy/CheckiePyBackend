@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-import config
+import credentials
+import hosts
 import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -27,7 +28,7 @@ SECRET_KEY = '2a-xkm6bps8c-t+y#21r$tkn#x*0eehz5xy%8smai!_lxr**g6'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['checkiepy.com', 'acs.uplatform.ru', '192.168.0.106', '127.0.0.1']
+ALLOWED_HOSTS = [hosts.HOSTNAME]
 
 
 # Application definition
@@ -89,8 +90,7 @@ DATABASES = {
         'NAME': 'checkiepy',
         'USER': 'checkiepy',
         'PASSWORD': 'checkiepy',
-#        'HOST': 'localhost',
-        'HOST': 'postgres',
+        'HOST': hosts.POSTGRES_HOST,
         'PORT': '',
     }
 }
@@ -147,9 +147,9 @@ REST_FRAMEWORK = {
 
 # Celery
 
-#CELERY_BROKER_URL = 'amqp://localhost//'
-CELERY_BROKER_URL = 'amqp://rabbitmq//'
+CELERY_BROKER_URL = 'amqp://' + hosts.RABBITMQ_HOST + '//'
 CELERY_RESULT_BACKEND = 'rpc://'
+
 
 # Dulwich
 
@@ -163,8 +163,8 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-SOCIAL_AUTH_GITHUB_KEY = config.CLIENT_ID
-SOCIAL_AUTH_GITHUB_SECRET = config.CLIENT_SECRET
+SOCIAL_AUTH_GITHUB_KEY = credentials.CLIENT_ID
+SOCIAL_AUTH_GITHUB_SECRET = credentials.CLIENT_SECRET
 SOCIAL_AUTH_GITHUB_SCOPE = ['repo:status', 'admin:repo_hook']
 
 LOGIN_URL = '/auth/complete/'
@@ -173,7 +173,7 @@ LOGIN_REDIRECT_URL = '/auth/complete/'
 
 # Webhook
 
-WEBHOOK_URL = 'https://checkiepy.com/api/repository/handle_hook/'
+WEBHOOK_URL = hosts.WEBHOOK_HOST + '/api/repository/handle_hook/'
 
 
 # CORS

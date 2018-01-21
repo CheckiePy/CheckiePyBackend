@@ -5,36 +5,468 @@
 ### 1. Prerequisites
 
 * Python 3.5
+* PostgreSQL 9.6
+* RabbitMQ 3
 
-### 2. Setup and run
+### 2. How to use
+
+##### 2.1. Setup the system
 
 ```
-git clone https://github.com/acsproj/acsbackend.git
-cd acsbackend
+git clone https://github.com/CheckiePy/CheckiePyBackend.git
+cd CheckiePyBackend
 python3 -m venv venv
 source venv/bin/activate
-pip3 install git+https://github.com/acsproj/acscore.git@0.15
+pip3 install git+https://github.com/CheckiePy/CheckiePyCore.git@0.16
 pip3 install -r requirements.txt
 cd acs
+python3 manage.py migrate
+python3 manage.py collectstatic --noinput
+python3 manage.py createsuperuser
+```
+
+##### 2.2. Edit hosts
+
+Edit [hosts.py](/acs/hosts.py) file the way you like:
+
+```python
+# Hosts for running the application in a local environment
+
+# HOSTNAME = '127.0.0.1'
+# POSTGRES_HOST = 'localhost'
+# RABBITMQ_HOST = 'localhost'
+
+
+# Hosts for running the application in a Docker container
+# HOSTNAME and WEBHOOK_HOST should be set according to your domain or server IP address
+
+HOSTNAME = 'checkiepy.com'
+POSTGRES_HOST = 'postgres'
+RABBITMQ_HOST = 'rabbitmq'
+
+
+# Replace 'https' with 'http' if you don't use a secure connection
+
+WEBHOOK_HOST = 'https://checkiepy.com'
+```
+
+##### 2.3. Create GitHub OAuth App
+
+* Create a new GitHub OAuth App ([documentation](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/)).
+
+* To run the system locally, the settings should be like this:
+
+![OAuth](/docs/oauth.png)
+
+* Provide **Client ID** and **Client Secret** in the next section.
+
+##### 2.4. Provide credentials
+
+Create **credentials.py** file in [acs](/acs) directory:
+
+```python
+CLIENT_ID = ''
+CLIENT_SECRET = ''
+BOT_AUTH = ''
+```
+
+Where one can get BOT_AUTH will be described in section 2.7.
+
+##### 2.5. Run Django
+
+```
 python3 manage.py runserver
 ```
 
-**Note:**
-For async tasks RabbitMQ is required. Start a celery worker with this command:
+##### 2.6. Run Celery
 
 ```
 celery -A acs worker -l info
 ```
+
+**Note:**
+Django and Celery should be running simultaneously in different command lines (don't forget to run virtual environment in both command lines).
+
+##### 2.7. Get bot auth credential
+
+* Login with [http://127.0.0.1:8000/login/github/](http://127.0.0.1:8000/login/github/)
+* Login to admin panel [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) with superuser that created in section 2.1
+* Open **User social auths** in SOCIAL_DJANGO section
+* Find and open your user
+* Copy **access_token** and paste as BOT_AUTH in section 2.4
+
+**Note**: You can create a special GitHub user for this purpose.
+
 ### 3. API
 
-* TODO
+#### 3.1. Auth
+
+Open in a browser:
+
+```
+GET /login/github/
+```
+
+After auth you will be redirected to url like:
+```
+/?token=<TOKEN>
+```
+
+Now you can take the TOKEN and use it in the rest requests.
+
+#### 3.2. Code styles
+
+##### 3.2.1. Create
+
+Create a new code style:
+
+```
+POST /api/code_style/create/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "name": "Code style name",
+  "repository": "Repository url"
+}
+```
+
+Response body: see response body for **3.2.2. Read**
+
+##### 3.2.2. Read
+
+Get code style info by id:
+
+```
+GET /api/code_style/read/<id>/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Response body (200):
+
+```json
+{
+    "result":
+    {
+      "id": 1,
+      "name": "Code style name",
+      "repository": "Repository url", 
+      "calc_status": "S"
+    }
+}
+```
+
+Response body (4XX):
+
+```json
+{
+    "detail": "Error description"
+}
+```
+
+Calculation status:
+* **S** - started
+* **F** - failed
+* **C** - completed
+
+##### 3.2.3. Delete
+
+Delete code style by id:
+
+```
+POST /api/code_style/delete/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "id": 1
+}
+```
+
+Response body (200):
+
+```json
+{
+  "result": 1
+}
+```
+
+Response body (4XX):
+
+```json
+{
+    "detail": "Error description"
+}
+```
+
+##### 3.2.4. List
+
+List all completed code styles:
+
+```
+GET /api/code_style/list/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Response body (200):
+
+```json
+{
+    "result":
+    [
+        {
+          "id": 1,
+          "name": "Code style name 1",
+          "repository": "Repository url 1", 
+          "calc_status": "C"
+        },
+        {
+          "id": 2,
+          "name": "Code style name 2",
+          "repository": "Repository url 2", 
+          "calc_status": "C"
+        }
+    ]
+}
+```
+
+Response body (4XX):
+
+```json
+{
+    "detail": "Error description"
+}
+```
+
+It returns code styles only with **C** calculation status (calc_status).
+For calculation status details see **3.2.2. Read**
+
+#### 3.3. Repositories
+
+##### 3.3.1. Update
+
+Sync the user repository list with GitHub:
+
+```
+POST /api/repository/update/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Response body (200):
+
+```json
+{
+    "result": "Repository update was started"
+}
+```
+
+Response body (4XX):
+
+```json
+{
+    "detail": "Error description"
+}
+```
+
+##### 3.3.2. List
+
+List all user repositories:
+
+```
+GET /api/repository/list/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Response body (200):
+
+```json
+{
+    "result":
+    [
+        {
+          "id": 1,
+          "name": "Repository name 1",
+          "is_connected": false, 
+          "code_style_name": "Code style name 2"
+        },
+        {
+          "id": 2,
+          "name": "Repository name 2",
+          "is_connected": true, 
+          "calc_status": "Code style name 1"
+        }
+    ]
+}
+```
+
+##### 3.3.3. Last update
+
+Get date and status of last repository sync with GitHub:
+
+```
+GET /api/repository/last_update/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Response body (200):
+
+```json
+{
+    "result":
+    {
+          "datetime": "datetime",
+          "status": "S"
+    }
+}
+```
+
+Status:
+
+* **S** - started
+* **F** - failed
+* **C** - completed
+
+##### 3.3.4. Connect
+
+Connect a code style to a repository by ids:
+
+```
+POST /api/repository/connect/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "code_style": 1,
+  "repository": 2
+}
+```
+
+Response body (200):
+
+```json
+{
+    "result":
+    {
+      "code_style": 1,
+      "repository": 2
+    }
+}
+```
+
+Response body (4XX):
+
+```json
+{
+    "detail": "Error description"
+}
+```
+
+##### 3.3.5. Disconnect
+
+Disconnect a code style from a repository by id:
+
+```
+POST /api/repository/disconnect/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "id": 2
+}
+```
+
+Response body (200):
+
+```json
+{
+    "result":
+    {
+      "id": 2
+    }
+}
+```
+
+Response body (4XX):
+
+```json
+{
+    "detail": "Error description"
+}
+```
+
+##### Handle hook
+
+Handle GitHub webhook for repository with specified id:
+
+```
+POST /api/repository/handle_hook/<id>/
+```
+
+Request body: webhook body from GitHub.
+
+Response body (200):
+
+```
+true
+```
 
 # License
 
-The MIT License (MIT) Copyright (c) 2017 Artem Ustimov
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+[MIT](/LICENSE)

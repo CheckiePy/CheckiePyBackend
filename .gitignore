@@ -105,7 +105,7 @@ ENV/
 *.sqlite3
 
 # Secrets
-acs/config.py
+acs/credentials.py
 
 # Static
 acs/static

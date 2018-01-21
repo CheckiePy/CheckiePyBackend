@@ -43,6 +43,7 @@ def repository_list(request):
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
 def last_repository_update(request):
+    # TODO: check if there is no updates
     last_update = models.GitRepositoryUpdate.objects.filter(user=request.user).order_by('-datetime').first()
     serializer = serializers.GitRepositoryUpdateSerializer(last_update)
     return Response({'result': serializer.data}, status.HTTP_200_OK)
