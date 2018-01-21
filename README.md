@@ -10,7 +10,7 @@
 
 ### 2. How to use
 
-##### 2.1. Setup the system
+#### 2.1. Setup the system
 
 ```
 git clone https://github.com/CheckiePy/CheckiePyBackend.git
@@ -25,7 +25,7 @@ python3 manage.py collectstatic --noinput
 python3 manage.py createsuperuser
 ```
 
-##### 2.2. Edit hosts
+#### 2.2. Edit hosts
 
 Edit [hosts.py](/acs/hosts.py) file the way you like:
 
@@ -50,7 +50,7 @@ RABBITMQ_HOST = 'rabbitmq'
 WEBHOOK_HOST = 'https://checkiepy.com'
 ```
 
-##### 2.3. Create GitHub OAuth App
+#### 2.3. Create GitHub OAuth App
 
 * Create a new GitHub OAuth App ([documentation](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/)).
 
@@ -60,7 +60,7 @@ WEBHOOK_HOST = 'https://checkiepy.com'
 
 * Provide **Client ID** and **Client Secret** in the next section.
 
-##### 2.4. Provide credentials
+#### 2.4. Provide credentials
 
 Create **credentials.py** file in [acs](/acs) directory:
 
@@ -72,13 +72,13 @@ BOT_AUTH = ''
 
 Where one can get BOT_AUTH will be described in section 2.7.
 
-##### 2.5. Run Django
+#### 2.5. Run Django
 
 ```
 python3 manage.py runserver
 ```
 
-##### 2.6. Run Celery
+#### 2.6. Run Celery
 
 ```
 celery -A acs worker -l info
@@ -87,13 +87,13 @@ celery -A acs worker -l info
 **Note:**
 Django and Celery should be running simultaneously in different command lines (don't forget to run virtual environment in both command lines).
 
-##### 2.7. Get bot auth credential
+#### 2.7. Get bot auth credential
 
-* Login with [http://127.0.0.1:8000/login/github/](http://127.0.0.1:8000/login/github/)
-* Login to admin panel [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) with superuser that created in section 2.1
-* Open **User social auths** in SOCIAL_DJANGO section
-* Find and open your user
-* Copy **access_token** and paste as BOT_AUTH in section 2.4
+* Login with [http://127.0.0.1:8000/login/github/](http://127.0.0.1:8000/login/github/).
+* Login to admin panel [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) with superuser that created in section 2.1.
+* Open **User social auths** in SOCIAL_DJANGO section.
+* Find and open your user.
+* Copy **access_token** and paste as BOT_AUTH in section 2.4.
 
 **Note**: You can create a special GitHub user for this purpose.
 
@@ -114,9 +114,9 @@ After auth you will be redirected to url like:
 
 Now you can take the TOKEN and use it in the rest requests.
 
-#### 3.2. Code styles
+### 3.2. Code styles
 
-##### 3.2.1. Create
+#### 3.2.1. Create
 
 Create a new code style:
 
@@ -141,7 +141,7 @@ Request body:
 
 Response body: see response body for **3.2.2. Read**
 
-##### 3.2.2. Read
+#### 3.2.2. Read
 
 Get code style info by id:
 
@@ -182,7 +182,7 @@ Calculation status:
 * **F** - failed
 * **C** - completed
 
-##### 3.2.3. Delete
+#### 3.2.3. Delete
 
 Delete code style by id:
 
@@ -220,7 +220,7 @@ Response body (4XX):
 }
 ```
 
-##### 3.2.4. List
+#### 3.2.4. List
 
 List all completed code styles:
 
@@ -267,9 +267,9 @@ Response body (4XX):
 It returns code styles only with **C** calculation status (calc_status).
 For calculation status details see **3.2.2. Read**
 
-#### 3.3. Repositories
+### 3.3. Repositories
 
-##### 3.3.1. Update
+#### 3.3.1. Update
 
 Sync the user repository list with GitHub:
 
@@ -299,7 +299,7 @@ Response body (4XX):
 }
 ```
 
-##### 3.3.2. List
+#### 3.3.2. List
 
 List all user repositories:
 
@@ -335,7 +335,7 @@ Response body (200):
 }
 ```
 
-##### 3.3.3. Last update
+#### 3.3.3. Last update
 
 Get date and status of last repository sync with GitHub:
 
@@ -367,7 +367,7 @@ Status:
 * **F** - failed
 * **C** - completed
 
-##### 3.3.4. Connect
+#### 3.3.4. Connect
 
 Connect a code style to a repository by ids:
 
@@ -410,7 +410,7 @@ Response body (4XX):
 }
 ```
 
-##### 3.3.5. Disconnect
+#### 3.3.5. Disconnect
 
 Disconnect a code style from a repository by id:
 
@@ -451,7 +451,7 @@ Response body (4XX):
 }
 ```
 
-##### Handle hook
+#### 3.3.6. Handle hook
 
 Handle GitHub webhook for repository with specified id:
 
