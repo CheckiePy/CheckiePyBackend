@@ -10,7 +10,9 @@
 
 ### 2. How to use
 
-#### 2.1. Setup the system
+To deploy the whole system at once you should use [deploy repository](https://github.com/CheckiePy/CheckiePyDeploy). To run only the backend follow this documentation.
+
+#### 2.1. Setup the application
 
 ```
 git clone https://github.com/CheckiePy/CheckiePyBackend.git
@@ -27,7 +29,7 @@ python3 manage.py createsuperuser
 
 #### 2.2. Edit hosts
 
-Edit [hosts.py](/acs/hosts.py) file the way you like:
+Edit [hosts.py](/acs/hosts.py) file the way you need:
 
 ```python
 # Hosts for running the application in a local environment
@@ -50,11 +52,11 @@ RABBITMQ_HOST = 'rabbitmq'
 WEBHOOK_HOST = 'https://checkiepy.com'
 ```
 
-#### 2.3. Create GitHub OAuth App
+#### 2.3. Create a GitHub OAuth App
 
 * Create a new GitHub OAuth App ([documentation](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/)).
 
-* To run the system locally, the settings should be like this:
+* To run the application locally the settings should be like this (the authorization callback URL should be the same as the application `HOSTNAME`):
 
 ![OAuth](/docs/oauth.png)
 
@@ -70,7 +72,7 @@ CLIENT_SECRET = ''
 BOT_AUTH = ''
 ```
 
-Where one can get BOT_AUTH will be described in section 2.7.
+How to get `BOT_AUTH` is described in [this](https://github.com/CheckiePy/CheckiePyBackend/tree/master#27-get-bot-auth-credential) section.
 
 #### 2.5. Run Django
 
@@ -87,15 +89,15 @@ celery -A acs worker -l info
 **Note:**
 Django and Celery should be running simultaneously in different command lines (don't forget to run virtual environment in both command lines).
 
-#### 2.7. Get bot auth credential
+#### 2.7. Get a credential for the bot
 
-* Login with [http://127.0.0.1:8000/login/github/](http://127.0.0.1:8000/login/github/).
-* Login to admin panel [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) with superuser that created in section 2.1.
-* Open **User social auths** in SOCIAL_DJANGO section.
+* Using bot account login in the application with URL [http://127.0.0.1:8000/login/github/](http://127.0.0.1:8000/login/github/) (adjust the hostname here and further according to your settings).
+* Login to admin panel [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) with superuser created in section [2.1](https://github.com/CheckiePy/CheckiePyBackend/tree/master#21-setup-the-system).
+* Open **User social auths** in **SOCIAL_DJANGO** section.
 * Find and open your user.
-* Copy **access_token** and paste as BOT_AUTH in section 2.4.
+* Copy **access_token** and paste as `BOT_AUTH` in section [2.4](https://github.com/CheckiePy/CheckiePyBackend/tree/master#24-provide-credentials).
 
-**Note**: You can create a special GitHub user for this purpose.
+**Note**: You should create a special GitHub user for this purpose.
 
 ### 3. API
 
@@ -107,7 +109,7 @@ Open in a browser:
 GET /login/github/
 ```
 
-After auth you will be redirected to url like:
+After authentication you will be redirected to a url like:
 ```
 /?token=<TOKEN>
 ```
@@ -139,11 +141,11 @@ Request body:
 }
 ```
 
-Response body: see response body for **3.2.2. Read**
+Response body: see the response body for the [read](https://github.com/CheckiePy/CheckiePyBackend/tree/master#322-read) request.
 
 #### 3.2.2. Read
 
-Get code style info by id:
+Get a code style info by a id:
 
 ```
 GET /api/code_style/read/<id>/
@@ -184,7 +186,7 @@ Calculation status:
 
 #### 3.2.3. Delete
 
-Delete code style by id:
+Delete a code style by a id:
 
 ```
 POST /api/code_style/delete/
@@ -264,14 +266,14 @@ Response body (4XX):
 }
 ```
 
-It returns code styles only with **C** calculation status (calc_status).
-For calculation status details see **3.2.2. Read**
+The request returns code styles only with **C** calculation status (calc_status).
+For calculation status details see [read](https://github.com/CheckiePy/CheckiePyBackend/tree/master#322-read) request.
 
 ### 3.3. Repositories
 
 #### 3.3.1. Update
 
-Sync the user repository list with GitHub:
+Synchronize the user repository list with GitHub:
 
 ```
 POST /api/repository/update/
@@ -337,7 +339,7 @@ Response body (200):
 
 #### 3.3.3. Last update
 
-Get date and status of last repository sync with GitHub:
+Get a date and a status of the last repository synchronization with GitHub:
 
 ```
 GET /api/repository/last_update/
@@ -412,7 +414,7 @@ Response body (4XX):
 
 #### 3.3.5. Disconnect
 
-Disconnect a code style from a repository by id:
+Disconnect a code style from a repository by a id:
 
 ```
 POST /api/repository/disconnect/
@@ -453,13 +455,13 @@ Response body (4XX):
 
 #### 3.3.6. Handle hook
 
-Handle GitHub webhook for repository with specified id:
+Handle a GitHub webhook for a repository with a id:
 
 ```
 POST /api/repository/handle_hook/<id>/
 ```
 
-Request body: webhook body from GitHub.
+Request body: the webhook body from GitHub.
 
 Response body (200):
 
