@@ -58,7 +58,10 @@ WEBHOOK_HOST = 'https://checkiepy.com'
 
 * To run the application locally the settings should be like this (the authorization callback URL should be the same as the application `HOSTNAME`):
 
-![OAuth](/docs/oauth.png)
+| Figure | 
+| ---- | 
+| ![OAuth](/docs/oauth.png) |
+
 
 * Provide **Client ID** and **Client Secret** in the next section.
 
@@ -73,7 +76,7 @@ BOT_AUTH = ''
 BOT_NAME = ''
 ```
 
-How to get `BOT_AUTH` is described in [this](https://github.com/CheckiePy/CheckiePyBackend/tree/master#27-get-bot-auth-credential) section.
+How to get `BOT_AUTH` and 'BOT_NAME' is described in [this](#27-get-a-credential-for-the-bot) section.
 
 #### 2.5. Run Django
 
@@ -93,10 +96,10 @@ Django and Celery should be running simultaneously in different command lines (d
 #### 2.7. Get a credential for the bot
 
 * Using bot account login in the application with URL [http://127.0.0.1:8000/login/github/](http://127.0.0.1:8000/login/github/) (adjust the hostname here and further according to your settings).
-* Login to admin panel [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) with superuser created in section [2.1](https://github.com/CheckiePy/CheckiePyBackend/tree/master#21-setup-the-system).
+* Login to admin panel [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) with superuser created in section [2.1](#21-setup-the-application).
 * Open **User social auths** in **SOCIAL_DJANGO** section.
 * Find and open your user.
-* Copy **access_token** and paste as `BOT_AUTH` in section [2.4](https://github.com/CheckiePy/CheckiePyBackend/tree/master#24-provide-credentials).
+* Copy **access_token**, **login** and paste as `BOT_AUTH`, `BOT_NAME` in section [2.4](#24-provide-credentials).
 
 **Note**: You should create a special GitHub user for this purpose.
 
@@ -142,7 +145,7 @@ Request body:
 }
 ```
 
-Response body: see the response body for the [read](https://github.com/CheckiePy/CheckiePyBackend/tree/master#322-read) request.
+Response body: see the response body for the [read](#322-read) request.
 
 #### 3.2.2. Read
 
