@@ -70,6 +70,7 @@ Create **credentials.py** file in [acs](/acs) directory:
 CLIENT_ID = ''
 CLIENT_SECRET = ''
 BOT_AUTH = ''
+BOT_NAME = ''
 ```
 
 How to get `BOT_AUTH` is described in [this](https://github.com/CheckiePy/CheckiePyBackend/tree/master#27-get-bot-auth-credential) section.
@@ -453,7 +454,43 @@ Response body (4XX):
 }
 ```
 
-#### 3.3.6. Handle hook
+#### 3.3.6. Logout
+
+Log out from the system:
+
+```
+POST /api/logout/
+```
+
+Header:
+```
+Authorization: Token TOKEN
+Content-Type: application/json
+```
+
+Request body:
+
+```
+empty
+```
+
+Response body (200):
+
+```json
+{
+    "result": true
+}
+```
+
+Response body (4XX):
+
+```json
+{
+    "detail": "Error description"
+}
+```
+
+#### 3.3.7. Handle hook
 
 Handle a GitHub webhook for a repository with a id:
 

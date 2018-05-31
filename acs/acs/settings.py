@@ -28,7 +28,7 @@ SECRET_KEY = '2a-xkm6bps8c-t+y#21r$tkn#x*0eehz5xy%8smai!_lxr**g6'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [hosts.HOSTNAME]
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', hosts.HOSTNAME]
 
 
 # Application definition
@@ -231,4 +231,4 @@ LOGGING = {
 
 # Bot
 
-BOT_NAME = 'CheckiePyBot'
+BOT_NAME = credentials.BOT_NAME

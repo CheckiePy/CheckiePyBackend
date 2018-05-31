@@ -1,6 +1,5 @@
 from django.utils import timezone
 
-from code_style import models as code_style_models
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -10,6 +9,7 @@ from rest_framework.response import Response
 from . import models
 from . import tasks
 from . import serializers
+from code_style import models as code_style_models
 from code_style import serializers as code_style_serializers
 
 
